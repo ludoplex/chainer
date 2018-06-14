@@ -4,6 +4,7 @@ import math
 import numpy
 
 from chainer.backends import cuda
+from chainer.backends import intel64
 from chainer import optimizer
 
 
@@ -88,17 +89,34 @@ class AdamRule(optimizer.UpdateRule):
             if self.hyperparam.amsgrad:
                 self.state['vhat'] = xp.zeros_like(param.data)
 
+        # For iDeep
+        if (isinstance(param.data, intel64.mdarray)
+                and intel64.inputs_all_ready((self.state['m'],))
+                and intel64.inputs_all_ready((self.state['v'],))):
+            self.state['m'] = intel64.ideep.array(
+                self.state['m'], itype=intel64.ideep.wgt_array)
+            self.state['v'] = intel64.ideep.array(
+                self.state['v'], itype=intel64.ideep.wgt_array)
+            if self.hyperparam.amsgrad:
+                self.state['vhat'] = intel64.ideep.array(
+                    self.state['vhat'], itype=intel64.ideep.wgt_array)
+
     def update_core_cpu(self, param):
         grad = param.grad
         if grad is None:
             return
+
+        m, v = self.state['m'], self.state['v']
+        if (isinstance(m, intel64.mdarray) and
+            isinstance(v, intel64.mdarray)):
+            return self.update_core_ideep(param)
+
         hp = self.hyperparam
         eps = grad.dtype.type(hp.eps)
         if hp.eps != 0 and eps == 0:
             raise ValueError(
                 'eps of Adam optimizer is too small for {} ({})'.format(
                     grad.dtype.name, hp.eps))
-        m, v = self.state['m'], self.state['v']
 
         m += (1 - hp.beta1) * (grad - m)
         v += (1 - hp.beta2) * (grad * grad - v)
@@ -110,6 +128,32 @@ class AdamRule(optimizer.UpdateRule):
             vhat = v
         param.data -= hp.eta * (self.lr * m / (numpy.sqrt(vhat) + hp.eps) +
                                 hp.weight_decay_rate * param.data)
+
+
+    def update_core_ideep(self, param):
+        grad = param.grad
+        hp = self.hyperparam
+        eps = grad.dtype.type(hp.eps)
+        if hp.eps != 0 and eps == 0:
+            raise ValueError(
+                'eps of Adam optimizer is too small for {} ({})'.format(
+                    grad.dtype.name, hp.eps))
+
+        m, v = self.state['m'], self.state['v']
+
+        if hp.amsgrad:
+            m.inplace_axpby(1.0, 1.0 - hp.beta1, grad - m) 
+            v.inplace_axpby(1.0, 1.0 - hp.beta2, grad*grad - v) 
+            vhat = self.state['vhat']
+            numpy.maximum(vhat, v, out=vhat)
+            param.data.inplace_axpby(1.0 - hp.weight_decay_rate, -hp.eta,
+                                     self.lr * m / (numpy.sqrt(vhat) + hp.eps))
+        else:
+            m.inplace_axpby(1.0, 1.0 - hp.beta1, grad - m) 
+            v.inplace_axpby(1.0, 1.0 - hp.beta2, grad*grad - v) 
+            param.data.inplace_axpby(1.0 - hp.weight_decay_rate, -hp.eta,
+                                     self.lr * m / (numpy.sqrt(v) + hp.eps))
+
 
     def update_core_gpu(self, param):
         grad = param.grad
