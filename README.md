@@ -1,6 +1,6 @@
 <div align="center"><img src="docs/image/chainer_red_h.png" width="400"/></div>
 
-# IntelChainer: Optimized-Chainer for Intel Architectures
+# Intel® Optimization for Chainer*
 
 [![GitHub license](https://img.shields.io/github/license/intel/chainer.svg)](https://github.com/intel/chainer)
 [![travis](https://img.shields.io/travis/intel/chainer/master.svg)](https://travis-ci.org/intel/chainer)
