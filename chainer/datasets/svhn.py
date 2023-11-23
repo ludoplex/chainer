@@ -44,7 +44,7 @@ def get_svhn(withlabel=True, scale=1., dtype=numpy.float32,
 
     """  # NOQA
     if not _scipy_available:
-        raise RuntimeError('SciPy is not available: %s' % _error)
+        raise RuntimeError(f'SciPy is not available: {_error}')
 
     train_raw = _retrieve_svhn_training()
     train = _preprocess_svhn(train_raw, withlabel, scale, dtype,
@@ -71,10 +71,7 @@ def _preprocess_svhn(raw, withlabel, scale, image_dtype, label_dtype):
     # Set "0" to be label 0 to restore expected ordering
     labels[labels == 10] = 0
 
-    if withlabel:
-        return tuple_dataset.TupleDataset(images, labels)
-    else:
-        return images
+    return tuple_dataset.TupleDataset(images, labels) if withlabel else images
 
 
 def _retrieve_svhn_training():

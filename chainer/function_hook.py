@@ -96,7 +96,7 @@ class FunctionHook(object):
     def __enter__(self):
         function_hooks = chainer.get_function_hooks()
         if self.name in function_hooks:
-            raise KeyError('hook %s already exists' % self.name)
+            raise KeyError(f'hook {self.name} already exists')
 
         function_hooks[self.name] = self
         self.added()

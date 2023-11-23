@@ -8,10 +8,7 @@ from chainer.backends import cuda
 
 
 def split_text(text, char_based=False):
-    if char_based:
-        return list(text)
-    else:
-        return text.split()
+    return list(text) if char_based else text.split()
 
 
 def normalize_text(text):
@@ -81,4 +78,4 @@ def convert_seq(batch, device=None, with_label=True):
         return {'xs': to_device_batch([x for x, _ in batch]),
                 'ys': to_device_batch([y for _, y in batch])}
     else:
-        return to_device_batch([x for x in batch])
+        return to_device_batch(list(batch))

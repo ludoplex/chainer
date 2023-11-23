@@ -80,7 +80,7 @@ def snapshot(savefun=npz.save_npz,
 
 def _snapshot_object(trainer, target, filename, savefun):
     fn = filename.format(trainer)
-    prefix = 'tmp' + fn
+    prefix = f'tmp{fn}'
 
     with utils.tempdir(prefix=prefix, dir=trainer.out) as tmpdir:
         tmppath = os.path.join(tmpdir, fn)

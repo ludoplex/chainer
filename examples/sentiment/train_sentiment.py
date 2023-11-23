@@ -52,7 +52,7 @@ epoch_per_eval = args.epocheval  # number of epochs per evaluation
 
 
 def convert_tree(vocab, exp):
-    assert isinstance(exp, list) and (len(exp) == 2 or len(exp) == 3)
+    assert isinstance(exp, list) and len(exp) in {2, 3}
 
     if len(exp) == 2:
         label, leaf = exp
@@ -136,10 +136,7 @@ def evaluate(model, test_trees):
 
 
 vocab = {}
-if args.test:
-    max_size = 10
-else:
-    max_size = None
+max_size = 10 if args.test else None
 train_trees = [convert_tree(vocab, tree)
                for tree in data.read_corpus('trees/train.txt', max_size)]
 test_trees = [convert_tree(vocab, tree)

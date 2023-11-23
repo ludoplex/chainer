@@ -55,16 +55,13 @@ class PolynomialShift(extension.Extension):
         value = self._init * decay ** self._rate
 
         if self._target is not None:
-            if self._rate > 1:
-                # almost same as value = min(value, self._target), but this
-                # line supports negative values, too
-                if value / self._target > 1:
-                    value = self._target
-            else:
-                # ditto
-                if value / self._target < 1:
-                    value = self._target
-
+            if (
+                self._rate > 1
+                and value / self._target > 1
+                or self._rate <= 1
+                and value / self._target < 1
+            ):
+                value = self._target
         setattr(optimizer, self._attr, value)
         self._t += 1
 

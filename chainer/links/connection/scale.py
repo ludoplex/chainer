@@ -47,12 +47,12 @@ class Scale(link.Chain):
                 self.W = variable.Parameter(1, W_shape)
                 if bias_term:
                     self.bias = bias.Bias(axis, W_shape)
-            else:
-                if bias_term:
-                    if bias_shape is None:
-                        raise ValueError(
-                            'bias_shape should be given if W is not '
-                            'learnt parameter and bias_term is True.')
+            elif bias_term:
+                if bias_shape is None:
+                    raise ValueError(
+                        'bias_shape should be given if W is not '
+                        'learnt parameter and bias_term is True.')
+                else:
                     self.bias = bias.Bias(axis, bias_shape)
 
     def __call__(self, *xs):
@@ -80,7 +80,4 @@ class Scale(link.Chain):
             z = scale.scale(x, y, axis)
 
         # Forward propagate bias term if given.
-        if hasattr(self, 'bias'):
-            return self.bias(z)
-        else:
-            return z
+        return self.bias(z) if hasattr(self, 'bias') else z

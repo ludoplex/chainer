@@ -109,8 +109,7 @@ class StatelessGRU(GRUBase):
         r = sigmoid.sigmoid(self.W_r(x) + self.U_r(h))
         z = sigmoid.sigmoid(self.W_z(x) + self.U_z(h))
         h_bar = tanh.tanh(self.W(x) + self.U(r * h))
-        h_new = linear_interpolate.linear_interpolate(z, h_bar, h)
-        return h_new
+        return linear_interpolate.linear_interpolate(z, h_bar, h)
 
 
 class StatefulGRU(GRUBase):

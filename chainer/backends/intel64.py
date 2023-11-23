@@ -45,8 +45,8 @@ def check_ideep_available():
             msg += ('\n\nEnsure iDeep requirements are satisfied: '
                     'https://github.com/intel/ideep')
         raise RuntimeError(
-            'iDeep is not available.\n'
-            'Reason: {}: {}'.format(type(_error).__name__, msg))
+            f'iDeep is not available.\nReason: {type(_error).__name__}: {msg}'
+        )
 
 
 def should_use_ideep(level):
@@ -72,17 +72,16 @@ def should_use_ideep(level):
     # Currently ideep does not provide a way to retrieve its version.
 
     if level not in _SHOULD_USE_IDEEP:
-        raise ValueError('invalid iDeep use level: %s '
-                         '(must be either of "==always" or ">=auto")' %
-                         repr(level))
-
-    flags = _SHOULD_USE_IDEEP[level]
+        raise ValueError(
+            f'invalid iDeep use level: {repr(level)} (must be either of "==always" or ">=auto")'
+        )
 
     use_ideep = config.use_ideep
+    flags = _SHOULD_USE_IDEEP[level]
     if use_ideep not in flags:
-        raise ValueError('invalid use_ideep configuration: %s '
-                         '(must be either of "always", "auto", or "never")' %
-                         repr(use_ideep))
+        raise ValueError(
+            f'invalid use_ideep configuration: {repr(use_ideep)} (must be either of "always", "auto", or "never")'
+        )
     return flags[use_ideep]
 
 
@@ -109,6 +108,7 @@ def inputs_all_ready(inputs, supported_ndim=(2, 4)):
     inputs = [x.data if isinstance(x, chainer.variable.Variable)
               else x for x in inputs]
 
-    return (ideep.check_ndim(inputs, supported_ndim)
-            and (all([isinstance(a, ideep.mdarray) for a in inputs])
-                 or ideep.check_type(inputs)))
+    return ideep.check_ndim(inputs, supported_ndim) and (
+        all(isinstance(a, ideep.mdarray) for a in inputs)
+        or ideep.check_type(inputs)
+    )

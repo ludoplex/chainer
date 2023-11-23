@@ -37,9 +37,10 @@ class PrintReport(extension.Extension):
             *entries) + '\n'
         self._header = header  # printed at the first call
 
-        templates = []
-        for entry, w in zip(entries, entry_widths):
-            templates.append((entry, '{:<%dg}  ' % w, ' ' * (w + 2)))
+        templates = [
+            (entry, '{:<%dg}  ' % w, ' ' * (w + 2))
+            for entry, w in zip(entries, entry_widths)
+        ]
         self._templates = templates
 
     def __call__(self, trainer):
@@ -55,8 +56,7 @@ class PrintReport(extension.Extension):
         elif isinstance(log_report, log_report_module.LogReport):
             log_report(trainer)  # update the log report
         else:
-            raise TypeError('log report has a wrong type %s' %
-                            type(log_report))
+            raise TypeError(f'log report has a wrong type {type(log_report)}')
 
         log = log_report.log
         log_len = self._log_len

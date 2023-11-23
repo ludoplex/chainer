@@ -86,8 +86,4 @@ def rsqrt(x):
     .. seealso:: :func:`~chainer.functions.sqrt`
     """
     xp = cuda.get_array_module(x)
-    if xp is numpy:
-        return 1.0 / sqrt(x)
-
-    # CuPy provides `rsqrt` which is faster than `1.0 / sqrt(x)`.
-    return RsqrtGPU().apply((x,))[0]
+    return 1.0 / sqrt(x) if xp is numpy else RsqrtGPU().apply((x,))[0]

@@ -33,19 +33,16 @@ class TupleDataset(object):
         length = len(datasets[0])
         for i, dataset in enumerate(datasets):
             if len(dataset) != length:
-                raise ValueError(
-                    'dataset of the index {} has a wrong length'.format(i))
+                raise ValueError(f'dataset of the index {i} has a wrong length')
         self._datasets = datasets
         self._length = length
 
     def __getitem__(self, index):
         batches = [dataset[index] for dataset in self._datasets]
-        if isinstance(index, slice):
-            length = len(batches[0])
-            return [tuple([batch[i] for batch in batches])
-                    for i in six.moves.range(length)]
-        else:
+        if not isinstance(index, slice):
             return tuple(batches)
+        length = len(batches[0])
+        return [tuple(batch[i] for batch in batches) for i in six.moves.range(length)]
 
     def __len__(self):
         return self._length

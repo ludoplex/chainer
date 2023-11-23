@@ -50,7 +50,7 @@ class InceptionBN(link.Chain):
         self.proj_pool = proj_pool
         self.stride = stride
         self.pooltype = pooltype
-        if pooltype != 'max' and pooltype != 'avg':
+        if pooltype not in ['max', 'avg']:
             raise NotImplementedError()
 
         with self.init_scope():
@@ -120,5 +120,4 @@ class InceptionBN(link.Chain):
             p = relu.relu(self.poolpn(self.poolp(p)))
         outs.append(p)
 
-        y = concat.concat(outs, axis=1)
-        return y
+        return concat.concat(outs, axis=1)

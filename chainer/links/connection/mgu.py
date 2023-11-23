@@ -20,8 +20,7 @@ class MGUBase(link.Chain):
     def _call_mgu(self, h, x):
         f = sigmoid.sigmoid(self.W_f(concat.concat([h, x])))
         h_bar = tanh.tanh(self.W_h(concat.concat([f * h, x])))
-        h_new = linear_interpolate.linear_interpolate(f, h_bar, h)
-        return h_new
+        return linear_interpolate.linear_interpolate(f, h_bar, h)
 
 
 class StatelessMGU(MGUBase):

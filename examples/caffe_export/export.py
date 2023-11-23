@@ -50,12 +50,12 @@ def main():
     args = parser.parse_args()
 
     if not os.path.exists(args.out_dir):
-        print('Created output directory: ' + args.out_dir)
+        print(f'Created output directory: {args.out_dir}')
         os.mkdir(args.out_dir)
     else:
-        print('Overwriting the existing directory: ' + args.out_dir)
+        print(f'Overwriting the existing directory: {args.out_dir}')
     if not os.path.isdir(args.out_dir):
-        raise ValueError(args.out_dir + ' exists but not a directory!')
+        raise ValueError(f'{args.out_dir} exists but not a directory!')
 
     print("load model")
     model, input = get_network_for_imagenet(args.arch)

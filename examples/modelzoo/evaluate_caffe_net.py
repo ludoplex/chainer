@@ -8,6 +8,7 @@ origin label at the second column (this format is same as that used by Caffe's
 ImageDataLayer).
 
 """
+
 import argparse
 import os
 import sys
@@ -55,7 +56,7 @@ with open(args.dataset) as list_file:
 assert len(dataset) % args.batchsize == 0
 
 
-print('Loading Caffe model file %s...' % args.model)
+print(f'Loading Caffe model file {args.model}...')
 func = caffe.CaffeFunction(args.model)
 print('Loaded')
 if args.gpu >= 0:
@@ -123,11 +124,11 @@ for path, label in dataset:
         del x, y, loss, accuracy
 
         count += args.batchsize
-        sys.stdout.write('{} / {}\r'.format(count, len(dataset)))
+        sys.stdout.write(f'{count} / {len(dataset)}\r')
         sys.stdout.flush()
 
         i = 0
 
 
-print('mean loss:     {}'.format(accum_loss / count))
-print('mean accuracy: {}'.format(accum_accuracy / count))
+print(f'mean loss:     {accum_loss / count}')
+print(f'mean accuracy: {accum_accuracy / count}')

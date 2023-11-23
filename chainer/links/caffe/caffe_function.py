@@ -156,22 +156,20 @@ class CaffeFunction(link.Chain):
 
         if net.layer:
             for layer in net.layer:
-                meth = _type_to_method.get(layer.type)
-                if meth:
+                if meth := _type_to_method.get(layer.type):
                     meth(self, layer)
                 else:
                     warnings.warn(
-                        'Skip the layer "%s", since CaffeFunction does not'
-                        'support %s layer' % (layer.name, layer.type))
+                        f'Skip the layer "{layer.name}", since CaffeFunction does notsupport {layer.type} layer'
+                    )
         else:  # v1 format
             for layer in net.layers:
-                meth = _oldname_to_method.get(layer.type)
-                if meth:
+                if meth := _oldname_to_method.get(layer.type):
                     meth(self, layer)
                 else:
                     warnings.warn(
-                        'Skip the layer "%s", since CaffeFunction does not'
-                        'support it' % layer.name)
+                        f'Skip the layer "{layer.name}", since CaffeFunction does notsupport it'
+                    )
 
     def __call__(self, inputs, outputs, disable=(), **kwargs):
         """__call__(self, inputs, outputs, disable=())
@@ -227,9 +225,9 @@ class CaffeFunction(link.Chain):
         return tuple(variables[blob] for blob in outputs)
 
     def _add_layer(self, layer):
-        bottom = []
-        for blob_name in layer.bottom:
-            bottom.append(self.split_map.get(blob_name, blob_name))
+        bottom = [
+            self.split_map.get(blob_name, blob_name) for blob_name in layer.bottom
+        ]
         self.layers.append((layer.name, bottom, list(layer.top)))
 
     @_layer('Concat', 'CONCAT')
@@ -489,52 +487,40 @@ class CaffeFunction(link.Chain):
 def _get_ksize(param):
     if param.kernel_h > 0:
         return param.kernel_h, param.kernel_w
-    elif type(param.kernel_size) == int:
+    elif type(param.kernel_size) == int or len(param.kernel_size) != 1:
         return param.kernel_size
-    elif len(param.kernel_size) == 1:
-        return param.kernel_size[0]
     else:
-        return param.kernel_size
+        return param.kernel_size[0]
 
 
 def _get_stride(param):
     if param.stride_h > 0:
         return param.stride_h, param.stride_w
-    elif type(param.stride) == int:
+    elif type(param.stride) == int or len(param.stride) not in [0, 1]:
         return param.stride
     elif len(param.stride) == 0:
         return 1
-    elif len(param.stride) == 1:
-        return param.stride[0]
     else:
-        return param.stride
+        return param.stride[0]
 
 
 def _get_pad(param):
     if param.pad_h > 0:
         return param.pad_h, param.pad_w
-    elif type(param.pad) == int:
+    elif type(param.pad) == int or len(param.pad) not in [0, 1]:
         return param.pad
     elif len(param.pad) == 0:
         return 0
-    elif len(param.pad) == 1:
-        return param.pad[0]
     else:
-        return param.pad
+        return param.pad[0]
 
 
 def _get_num(blob):
-    if blob.num > 0:
-        return blob.num
-    else:
-        return blob.shape.dim[0]
+    return blob.num if blob.num > 0 else blob.shape.dim[0]
 
 
 def _get_channels(blob):
-    if blob.channels > 0:
-        return blob.channels
-    else:
-        return blob.shape.dim[1]
+    return blob.channels if blob.channels > 0 else blob.shape.dim[1]
 
 
 def _get_height(blob):
@@ -545,9 +531,7 @@ def _get_height(blob):
     elif len(blob.shape.dim) == 4:
         return blob.shape.dim[2]
     else:
-        raise RuntimeError(
-            '{}-dimentional array is not supported'.format(
-                len(blob.shape.dim)))
+        raise RuntimeError(f'{len(blob.shape.dim)}-dimentional array is not supported')
 
 
 def _get_width(blob):
@@ -558,9 +542,7 @@ def _get_width(blob):
     elif len(blob.shape.dim) == 4:
         return blob.shape.dim[3]
     else:
-        raise RuntimeError(
-            '{}-dimentional array is not supported'.format(
-                len(blob.shape.dim)))
+        raise RuntimeError(f'{len(blob.shape.dim)}-dimentional array is not supported')
 
 
 # Internal class

@@ -36,10 +36,7 @@ class Dstack(function_node.FunctionNode):
         gy, = grad_outputs
         ndim = len(self.inputs[0].shape)
         if len(self.inputs) == 1:
-            if ndim <= 2:
-                return gy.reshape(self.inputs[0].shape),
-            return gy,
-
+            return (gy.reshape(self.inputs[0].shape), ) if ndim <= 2 else (gy, )
         if ndim <= 2:
             gxs = chainer.functions.split_axis(gy, len(self.inputs), axis=2)
             return [gx.reshape(self.inputs[0].shape) for gx in gxs]

@@ -23,8 +23,7 @@ def sequence_embed(embed, xs):
     x_len = [len(x) for x in xs]
     x_section = numpy.cumsum(x_len[:-1])
     ex = embed(F.concat(xs, axis=0))
-    exs = F.split_axis(ex, x_section, 0)
-    return exs
+    return F.split_axis(ex, x_section, 0)
 
 
 class Seq2seq(chainer.Chain):
@@ -72,13 +71,13 @@ class Seq2seq(chainer.Chain):
 
     def translate(self, xs, max_length=100):
         batch = len(xs)
-        with chainer.no_backprop_mode(), chainer.using_config('train', False):
+        with (chainer.no_backprop_mode(), chainer.using_config('train', False)):
             xs = [x[::-1] for x in xs]
             exs = sequence_embed(self.embed_x, xs)
             h, c, _ = self.encoder(None, None, exs)
             ys = self.xp.full(batch, EOS, numpy.int32)
             result = []
-            for i in range(max_length):
+            for _ in range(max_length):
                 eys = self.embed_y(ys)
                 eys = F.split_axis(eys, batch, 0)
                 h, c, ys = self.decoder(h, c, eys)
@@ -157,7 +156,7 @@ class CalculateBleu(chainer.training.Extension):
 
 def count_lines(path):
     with open(path) as f:
-        return sum([1 for _ in f])
+        return sum(1 for _ in f)
 
 
 def load_vocabulary(path):
@@ -173,7 +172,7 @@ def load_data(vocabulary, path):
     n_lines = count_lines(path)
     bar = progressbar.ProgressBar()
     data = []
-    print('loading...: %s' % path)
+    print(f'loading...: {path}')
     with open(path) as f:
         for line in bar(f, max_value=n_lines):
             words = line.strip().split()
@@ -305,9 +304,9 @@ def main():
             source_sentence = ' '.join([source_words[x] for x in source])
             target_sentence = ' '.join([target_words[y] for y in target])
             result_sentence = ' '.join([target_words[y] for y in result])
-            print('# source : ' + source_sentence)
-            print('# result : ' + result_sentence)
-            print('# expect : ' + target_sentence)
+            print(f'# source : {source_sentence}')
+            print(f'# result : {result_sentence}')
+            print(f'# expect : {target_sentence}')
 
         trainer.extend(
             translate, trigger=(args.validation_interval, 'iteration'))

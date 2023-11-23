@@ -107,8 +107,8 @@ class AdamRule(optimizer.UpdateRule):
         eps = grad.dtype.type(hp.eps)
         if hp.eps != 0 and eps == 0:
             raise ValueError(
-                'eps of Adam optimizer is too small for {} ({})'.format(
-                    grad.dtype.name, hp.eps))
+                f'eps of Adam optimizer is too small for {grad.dtype.name} ({hp.eps})'
+            )
         m, v = self.state['m'], self.state['v']
         if (isinstance(m, intel64.mdarray) and
             isinstance(v, intel64.mdarray)):
@@ -143,8 +143,8 @@ class AdamRule(optimizer.UpdateRule):
         eps = grad.dtype.type(hp.eps)
         if hp.eps != 0 and eps == 0:
             raise ValueError(
-                'eps of Adam optimizer is too small for {} ({})'.format(
-                    grad.dtype.name, hp.eps))
+                f'eps of Adam optimizer is too small for {grad.dtype.name} ({hp.eps})'
+            )
         if hp.amsgrad:
             cuda.elementwise(
                 'T grad, T lr, T one_minus_beta1, T one_minus_beta2, T eps, \

@@ -154,7 +154,7 @@ class MultithreadIterator(iterator.Iterator):
         while not next.ready():
             next.wait(0.5)  # To avoid interruption bug in Python2
 
-        batch = [data for data in next.get()]
+        batch = list(next.get())
         self._next = None
 
         (self.current_position, self.epoch,

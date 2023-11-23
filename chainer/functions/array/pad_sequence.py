@@ -32,11 +32,7 @@ class PadSequence(function_node.FunctionNode):
     def forward(self, xs):
         xp = cuda.get_array_module(*xs)
 
-        if self.length is None:
-            length = max(len(x) for x in xs)
-        else:
-            length = self.length
-
+        length = max(len(x) for x in xs) if self.length is None else self.length
         shape = (len(xs), length) + xs[0].shape[1:]
         y = xp.empty(shape, xs[0].dtype)
         if length == 0:

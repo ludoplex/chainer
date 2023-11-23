@@ -133,10 +133,7 @@ class PlotReport(extension.Extension):
 
         if self._trigger(trainer):
             stats = self._summary.compute_mean()
-            stats_cpu = {}
-            for name, value in six.iteritems(stats):
-                stats_cpu[name] = float(value)  # copy to CPU
-
+            stats_cpu = {name: float(value) for name, value in six.iteritems(stats)}
             updater = trainer.updater
             stats_cpu['epoch'] = updater.epoch
             stats_cpu['iteration'] = updater.iteration
@@ -173,12 +170,10 @@ class PlotReport(extension.Extension):
 
     def serialize(self, serializer):
         if isinstance(serializer, serializer_module.Serializer):
-            serializer('_plot_{}'.format(self._file_name),
-                       json.dumps(self._data))
+            serializer(f'_plot_{self._file_name}', json.dumps(self._data))
 
         else:
-            self._data = json.loads(
-                serializer('_plot_{}'.format(self._file_name), ''))
+            self._data = json.loads(serializer(f'_plot_{self._file_name}', ''))
 
     def _init_summary(self):
         self._summary = reporter.DictSummary()

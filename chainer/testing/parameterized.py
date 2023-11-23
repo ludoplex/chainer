@@ -15,7 +15,7 @@ def _gen_case(base, module, i, param):
 
     def __str__(self):
         name = base.__str__(self)
-        return '%s  parameter: %s' % (name, param)
+        return f'{name}  parameter: {param}'
 
     mb = {'__str__': __str__}
     for k, v in six.iteritems(param):
@@ -108,8 +108,8 @@ def product(parameter):
 
     else:
         raise TypeError(
-            'parameter must be either dict or list. Actual: {}'.format(
-                type(parameter)))
+            f'parameter must be either dict or list. Actual: {type(parameter)}'
+        )
 
 
 def product_dict(*parameters):

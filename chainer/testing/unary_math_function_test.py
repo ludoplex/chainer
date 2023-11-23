@@ -36,9 +36,8 @@ def _func_name(func):
 def _func_class(func):
     if isinstance(func, function.Function):
         return func.__class__
-    else:
-        name = func.__name__.capitalize()
-        return getattr(functions, name, None)
+    name = func.__name__.capitalize()
+    return getattr(functions, name, None)
 
 
 def _make_data_default(shape, dtype):
@@ -192,7 +191,8 @@ def unary_math_function_unittest(func, func_expected=None, label_expected=None,
             make_data = _make_data_default
         else:
             def aux(shape, dtype):
-                return _make_data_default(shape, dtype)[0:2]
+                return _make_data_default(shape, dtype)[:2]
+
             make_data = aux
 
     def f(klass):
@@ -287,4 +287,5 @@ def unary_math_function_unittest(func, func_expected=None, label_expected=None,
             'shape': [(3, 2), ()],
             'dtype': [numpy.float16, numpy.float32, numpy.float64]
         }))(klass)
+
     return f

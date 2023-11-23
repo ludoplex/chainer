@@ -27,19 +27,28 @@ def assert_allclose(x, y, atol=1e-5, rtol=1e-4, verbose=True):
         f = six.StringIO()
         f.write(str(e) + '\n\n')
         f.write(
-            'assert_allclose failed: \n' +
-            '  shape: {} {}\n'.format(x.shape, y.shape) +
-            '  dtype: {} {}\n'.format(x.dtype, y.dtype))
+            (
+                (
+                    'assert_allclose failed: \n'
+                    + f'  shape: {x.shape} {y.shape}\n'
+                )
+                + f'  dtype: {x.dtype} {y.dtype}\n'
+            )
+        )
         if x.shape == y.shape:
             xx = x if x.ndim != 0 else x.reshape((1,))
             yy = y if y.ndim != 0 else y.reshape((1,))
             err = numpy.abs(xx - yy)
             i = numpy.unravel_index(numpy.argmax(err), err.shape)
             f.write(
-                '  i: {}\n'.format(i) +
-                '  x[i]: {}\n'.format(xx[i]) +
-                '  y[i]: {}\n'.format(yy[i]) +
-                '  err[i]: {}\n'.format(err[i]))
+                (
+                    (
+                        (f'  i: {i}\n' + f'  x[i]: {xx[i]}\n')
+                        + f'  y[i]: {yy[i]}\n'
+                    )
+                    + f'  err[i]: {err[i]}\n'
+                )
+            )
         opts = numpy.get_printoptions()
         try:
             numpy.set_printoptions(threshold=10000)

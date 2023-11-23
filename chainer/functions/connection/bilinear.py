@@ -7,9 +7,7 @@ from chainer.utils import type_check
 
 
 def _as_mat(x):
-    if x.ndim == 2:
-        return x
-    return x.reshape(len(x), -1)
+    return x if x.ndim == 2 else x.reshape(len(x), -1)
 
 
 def _ij_ik_il_to_jkl(a, b, c):
@@ -35,7 +33,7 @@ def _ik_il_jkl_to_ij(a, b, c):
 class BilinearFunction(function_node.FunctionNode):
     def check_type_forward(self, in_types):
         n_in = type_check.eval(in_types.size())
-        if n_in != 3 and n_in != 6:
+        if n_in not in [3, 6]:
             raise type_check.InvalidType(
                 '{0} or {1}'.format(
                     in_types.size() == 3, in_types.size() == 6),

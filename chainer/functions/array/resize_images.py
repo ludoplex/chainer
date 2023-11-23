@@ -113,11 +113,7 @@ class ResizeImagesGrad(function_node.FunctionNode):
         wv1 = wv1.astype(gy.dtype)
 
         # --- gx
-        if xp is numpy:
-            scatter_add = numpy.add.at
-        else:
-            scatter_add = cuda.cupyx.scatter_add
-
+        scatter_add = numpy.add.at if xp is numpy else cuda.cupyx.scatter_add
         gx = xp.zeros(self.input_shape, dtype=gy.dtype)
         gy = gy.reshape(B, C, -1)
         scatter_add(gx, (slice(None), slice(None), v0, u0), gy * wu1 * wv1)

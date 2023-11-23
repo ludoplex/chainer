@@ -39,8 +39,7 @@ class RNNForLM(chainer.Chain):
         h0 = self.embed(x)
         h1 = self.l1(F.dropout(h0))
         h2 = self.l2(F.dropout(h1))
-        y = self.l3(F.dropout(h2))
-        return y
+        return self.l3(F.dropout(h2))
 
 
 # Dataset iterator to create a batch of sequences at different positions.
@@ -99,9 +98,7 @@ class ParallelSequentialIterator(chainer.dataset.Iterator):
 
     @property
     def previous_epoch_detail(self):
-        if self._previous_epoch_detail < 0:
-            return None
-        return self._previous_epoch_detail
+        return None if self._previous_epoch_detail < 0 else self._previous_epoch_detail
 
     def get_words(self):
         # It returns a list of current words.
@@ -143,7 +140,7 @@ class BPTTUpdater(training.updaters.StandardUpdater):
         optimizer = self.get_optimizer('main')
 
         # Progress the dataset iterator for bprop_len words at each iteration.
-        for i in range(self.bprop_len):
+        for _ in range(self.bprop_len):
             # Get the next batch (a list of tuples of two word IDs)
             batch = train_iter.__next__()
 
@@ -198,7 +195,7 @@ def main():
     # Load the Penn Tree Bank long word sequence dataset
     train, val, test = chainer.datasets.get_ptb_words()
     n_vocab = max(train) + 1  # train is just an array of integers
-    print('#vocab = {}'.format(n_vocab))
+    print(f'#vocab = {n_vocab}')
 
     if args.test:
         train = train[:100]
@@ -255,7 +252,7 @@ def main():
     eval_rnn.reset_state()
     evaluator = extensions.Evaluator(test_iter, eval_model, device=args.gpu)
     result = evaluator()
-    print('test perplexity: {}'.format(np.exp(float(result['main/loss']))))
+    print(f"test perplexity: {np.exp(float(result['main/loss']))}")
 
     # Serialize the final model
     chainer.serializers.save_npz(args.model, model)

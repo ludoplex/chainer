@@ -40,7 +40,7 @@ class HDF5Serializer(serializer.Serializer):
         self.compression = compression
 
     def __getitem__(self, key):
-        name = self.group.name + '/' + key
+        name = f'{self.group.name}/{key}'
         return HDF5Serializer(self.group.require_group(name), self.compression)
 
     def __call__(self, key, value):
@@ -111,7 +111,7 @@ class HDF5Deserializer(serializer.Deserializer):
         self.strict = strict
 
     def __getitem__(self, key):
-        name = self.group.name + '/' + key
+        name = f'{self.group.name}/{key}'
         try:
             group = self.group.require_group(name)
         except ValueError:
@@ -122,10 +122,10 @@ class HDF5Deserializer(serializer.Deserializer):
 
     def __call__(self, key, value):
         if self.group is None:
-            if not self.strict:
-                return value
-            else:
+            if self.strict:
                 raise ValueError('Inexistent group is specified')
+            else:
+                return value
         if not self.strict and key not in self.group:
             return value
 

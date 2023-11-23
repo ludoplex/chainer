@@ -14,11 +14,10 @@ class TimeTrigger(object):
         self._next_time = self._period
 
     def __call__(self, trainer):
-        if self._next_time < trainer.elapsed_time:
-            self._next_time += self._period
-            return True
-        else:
+        if self._next_time >= trainer.elapsed_time:
             return False
+        self._next_time += self._period
+        return True
 
     def serialize(self, serializer):
         self._next_time = serializer('next_time', self._next_time)

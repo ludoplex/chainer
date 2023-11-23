@@ -24,8 +24,7 @@ def _compute_axis(x_ndim, param_ndim=1, axis=None):
 
 def _compute_key_axis(x_ndim, param_ndim=1, axis=None):
     axis = _compute_axis(x_ndim, param_ndim, axis)
-    key_axis = tuple([i for i in range(x_ndim) if i not in axis])
-    return key_axis
+    return tuple(i for i in range(x_ndim) if i not in axis)
 
 
 class BatchNormalization(function_node.FunctionNode):
@@ -45,8 +44,8 @@ class BatchNormalization(function_node.FunctionNode):
         if chainer.should_use_cudnn('>=auto'):
             if eps < libcudnn.CUDNN_BN_MIN_EPSILON:
                 raise RuntimeError(
-                    'cuDNN does not allow an eps value '
-                    'less than {}.'.format(libcudnn.CUDNN_BN_MIN_EPSILON))
+                    f'cuDNN does not allow an eps value less than {libcudnn.CUDNN_BN_MIN_EPSILON}.'
+                )
         self.decay = decay
         if isinstance(axis, collections.Sequence):
             for i in range(1, len(axis)):
@@ -644,7 +643,7 @@ def _as4darray(arr, key_axis):
     if arr.ndim == 4 and key_axis[0] == 1:
         return arr
     elif key_axis[0] == arr.ndim - 1:
-        return arr.reshape(numpy.prod(arr.shape[0:-1]), -1, 1, 1)
+        return arr.reshape(numpy.prod(arr.shape[:-1]), -1, 1, 1)
     else:
         msg = 'Unexpected combination of array shape and key_axis'
         raise RuntimeError(msg)
@@ -679,9 +678,7 @@ def _apply_bn_fwd(xp, x, mean, inv_std, gamma, beta):
 
 def _zero_if_none(xp, x, shape, dtype):
     # TODO(Tokui): Return broadcasted 0 instead of a zeroed array.
-    if x is None:
-        return xp.zeros(shape, dtype=dtype)
-    return x
+    return xp.zeros(shape, dtype=dtype) if x is None else x
 
 
 def _get_dtype_of_tensor_descriptor(desc):
@@ -695,7 +692,7 @@ def _get_dtype_of_tensor_descriptor(desc):
     elif cudnn_dtype == libcudnn.CUDNN_DATA_HALF:
         dtype = numpy.dtype(numpy.float16)
     else:
-        msg = 'Unknow cudnn data type {} '.format(cudnn_dtype)
+        msg = f'Unknow cudnn data type {cudnn_dtype} '
         raise RuntimeError(msg)
     return dtype
 

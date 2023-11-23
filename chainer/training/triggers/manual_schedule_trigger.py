@@ -21,7 +21,7 @@ class ManualScheduleTrigger(object):
     """
 
     def __init__(self, points, unit):
-        assert unit == 'epoch' or unit == 'iteration'
+        assert unit in ['epoch', 'iteration']
         self.points = (points if isinstance(points, list) else [points])
         self.unit = unit
 

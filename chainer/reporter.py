@@ -14,9 +14,7 @@ from chainer import variable
 
 
 def _copy_variable(value):
-    if isinstance(value, variable.Variable):
-        return copy.copy(value)
-    return value
+    return copy.copy(value) if isinstance(value, variable.Variable) else value
 
 
 class Reporter(object):
@@ -161,7 +159,7 @@ class Reporter(object):
                     'Given observer is not registered to the reporter.')
             observer_name = self._observer_names[observer_id]
             for key, value in six.iteritems(values):
-                name = '%s/%s' % (observer_name, key)
+                name = f'{observer_name}/{key}'
                 self.observation[name] = value
         else:
             self.observation.update(values)
@@ -245,10 +243,7 @@ def report_scope(observation):
 
 
 def _get_device(x):
-    if numpy.isscalar(x):
-        return cuda.DummyDevice
-    else:
-        return cuda.get_device_from_array(x)
+    return cuda.DummyDevice if numpy.isscalar(x) else cuda.get_device_from_array(x)
 
 
 class Summary(object):
@@ -365,7 +360,7 @@ class DictSummary(object):
         for name, summary in six.iteritems(self._summaries):
             mean, std = summary.make_statistics()
             stats[name] = mean
-            stats[name + '.std'] = std
+            stats[f'{name}.std'] = std
 
         return stats
 
@@ -373,9 +368,6 @@ class DictSummary(object):
         if isinstance(serializer, serializer_module.Serializer):
             names = list(self._summaries.keys())
             serializer('_names', json.dumps(names))
-            for index, name in enumerate(names):
-                self._summaries[name].serialize(
-                    serializer['_summaries'][str(index)])
         else:
             self._summaries.clear()
             try:
@@ -383,6 +375,6 @@ class DictSummary(object):
             except KeyError:
                 warnings.warn('The names of statistics are not saved.')
                 return
-            for index, name in enumerate(names):
-                self._summaries[name].serialize(
-                    serializer['_summaries'][str(index)])
+        for index, name in enumerate(names):
+            self._summaries[name].serialize(
+                serializer['_summaries'][str(index)])

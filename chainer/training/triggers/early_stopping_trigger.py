@@ -50,18 +50,16 @@ class EarlyStoppingTrigger(object):
 
         self._init_summary()
 
-        if mode == 'max':
+        if (
+            mode != 'max'
+            and mode != 'min'
+            and 'accuracy' in monitor
+            or mode == 'max'
+        ):
             self._compare = operator.gt
 
-        elif mode == 'min':
-            self._compare = operator.lt
-
         else:
-            if 'accuracy' in monitor:
-                self._compare = operator.gt
-
-            else:
-                self._compare = operator.lt
+            self._compare = operator.lt
 
         if self._compare == operator.gt:
             if verbose:
@@ -99,7 +97,7 @@ class EarlyStoppingTrigger(object):
             return False
 
         if self.monitor not in observation.keys():
-            warnings.warn('{} is not in observation'.format(self.monitor))
+            warnings.warn(f'{self.monitor} is not in observation')
             return False
 
         stat = self._summary.compute_mean()
@@ -115,7 +113,7 @@ class EarlyStoppingTrigger(object):
 
         if self._stop_condition():
             if self.verbose:
-                print('Epoch {}: early stopping'.format(trainer.updater.epoch))
+                print(f'Epoch {trainer.updater.epoch}: early stopping')
             return True
 
         return False

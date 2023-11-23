@@ -18,11 +18,10 @@ def _mat_ptrs(a):
     """
     if len(a) == 1:
         return cuda.cupy.full((1,), a.data.ptr, dtype=numpy.uintp)
-    else:
-        stride = a.strides[0]
-        ptr = a.data.ptr
-        return cuda.cupy.arange(ptr, ptr + stride * len(a), stride,
-                                dtype=numpy.uintp)
+    stride = a.strides[0]
+    ptr = a.data.ptr
+    return cuda.cupy.arange(ptr, ptr + stride * len(a), stride,
+                            dtype=numpy.uintp)
 
 
 def _as_batch_mat(x):
@@ -61,10 +60,7 @@ def _check_ndim(in_type, lower=1, upper=2):
 
 
 def _get_check_index(trans, right, row_idx=0, col_idx=1):
-    if trans ^ right:
-        return row_idx
-    else:
-        return col_idx
+    return row_idx if trans ^ right else col_idx
 
 
 class MatMul(function_node.FunctionNode):
@@ -166,10 +162,7 @@ def matmul(a, b, transa=False, transb=False):
 
 
 def _get_size(typ, index):
-    if index == 2 and type_check.eval(typ.ndim) == 2:
-        return 1
-    else:
-        return typ.shape[index]
+    return 1 if index == 2 and type_check.eval(typ.ndim) == 2 else typ.shape[index]
 
 
 def _batch_matmul(a, b, transa, transb, transout):
@@ -238,10 +231,10 @@ class BatchMatMulGrad(function_node.FunctionNode):
         if 0 in indexes or 1 in indexes:
             ga, gb = BatchMatMulGrad(self.transa, self.transb).apply(
                 (gga, ggb, gy))
-            if 0 in indexes:
-                ret.append(ga)
-            if 1 in indexes:
-                ret.append(gb)
+        if 0 in indexes:
+            ret.append(ga)
+        if 1 in indexes:
+            ret.append(gb)
         if 2 in indexes:
             ret.append(
                 BatchMatMul(self.transa, self.transb).apply((gga, b))[0] +

@@ -51,13 +51,12 @@ def average(x, axis=None, weights=None, keepdims=False):
                 reshape.reshape(weights, w_shape), x.shape)
 
         x = x * weights
+    elif axis is None:
+        divider = x.size
     else:
-        if axis is None:
-            divider = x.size
-        else:
-            divider = 1
-            for a in axis:
-                divider *= x.shape[a]
+        divider = 1
+        for a in axis:
+            divider *= x.shape[a]
 
     x_sum = sum_mod.sum(x, axis, keepdims)
     if weights is not None:

@@ -23,9 +23,7 @@ def _get_tensor4d_shape(axis, shape):
 
 
 def _get_cudnn_mode(shape):
-    if shape[2] == 1 and shape[3] == 1:
-        return _mode_instance
-    return _mode_channel
+    return _mode_instance if shape[2] == 1 and shape[3] == 1 else _mode_channel
 
 
 class Softmax(function_node.FunctionNode):

@@ -40,7 +40,7 @@ def succ_sublists(xs):
 
 
 def vars(prefix, n):
-    return ['{}_{}'.format(prefix, i) for i in six.moves.range(n)]
+    return [f'{prefix}_{i}' for i in six.moves.range(n)]
 
 
 class Writer(object):
@@ -50,10 +50,10 @@ class Writer(object):
         self._lines = []
 
     def write(self, line, indent=None):
-        if indent == 'dec' or indent == 'decinc':
+        if indent in ['dec', 'decinc']:
             self._indent -= 1
         self._lines.append('  ' * self._indent + line)
-        if indent == 'inc' or indent == 'decinc':
+        if indent in ['inc', 'decinc']:
             self._indent += 1
 
     def get(self):
@@ -77,7 +77,7 @@ class Im2colNDKernel(object):
 
     def _compile_c0(self, outs, ks):
         # 2D: int c0 = i / (k_0 * k_1 * out_0 * out_1)
-        return ['int c0 = i / ({});'.format(mulexp(ks + outs))]
+        return [f'int c0 = i / ({mulexp(ks + outs)});']
 
     def _compile_kx(self, ndim, outs, ks):
         # 2D: int kx_0 = i / (k_1 * out_0 * out_1) % k_0;
@@ -158,7 +158,7 @@ class Im2colNDKernel(object):
         in_params = self._in_params(ds, outs, ks, ss, ps)
         out_params = self._out_params()
         operation = self._operation(ndim, ds, outs, ks, ss, ps)
-        name = name = 'im2col_{}d'.format(ndim)
+        name = name = f'im2col_{ndim}d'
         return in_params, out_params, operation, name
 
     @staticmethod
@@ -187,7 +187,7 @@ class Col2imNDKernel(object):
 
     def _compile_c0(self, ds):
         # 2D: int c0 = i / (d_0 * d_1);
-        return ['int c0 = i / ({});'.format(mulexp(ds))]
+        return [f'int c0 = i / ({mulexp(ds)});']
 
     def _compile_x(self, ndim, ds, ps):
         # 2D: int x_0 = i / (d_1) % d_0 + p_0;
@@ -283,7 +283,7 @@ class Col2imNDKernel(object):
         in_params = self._in_params(ds, outs, ks, ss, ps)
         out_params = self._out_params()
         operation = self._operation(ndim, ds, outs, ks, ss, ps)
-        name = 'col2im_{}d'.format(ndim)
+        name = f'col2im_{ndim}d'
         return in_params, out_params, operation, name
 
     @staticmethod

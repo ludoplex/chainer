@@ -54,8 +54,8 @@ def multi_gpu(gpu_num):
 
     check_available()
     return unittest.skipIf(
-        0 <= _gpu_limit < gpu_num,
-        reason='{} GPUs required'.format(gpu_num))
+        0 <= _gpu_limit < gpu_num, reason=f'{gpu_num} GPUs required'
+    )
 
 
 def gpu(f):

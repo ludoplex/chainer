@@ -39,10 +39,11 @@ class BatchRenormalizationFunction(function.Function):
 
     def check_type_forward(self, in_types):
         n_in = type_check.eval(in_types.size())
-        if n_in != 3 and n_in != 5:
+        if n_in not in [3, 5]:
             raise type_check.InvalidType(
-                '%s or %s' % (in_types.size() == 3, in_types.size() == 5),
-                '%s == %s' % (in_types.size(), n_in))
+                f'{in_types.size() == 3} or {in_types.size() == 5}',
+                f'{in_types.size()} == {n_in}',
+            )
         x_type, gamma_type, beta_type = in_types[:3]
         M = type_check.eval(gamma_type.ndim)
         type_check.expect(
@@ -108,13 +109,13 @@ class BatchRenormalizationFunction(function.Function):
                 # Update running statistics:
                 m = x.size // gamma[expander].size
                 self.running_mean *= self.decay
-                adjust = m / max(m - 1., 1.)  # unbiased estimation
                 temp_ar = xp.array(mean)
                 temp_ar *= (1 - self.decay)
                 self.running_mean += temp_ar
                 del temp_ar
                 self.running_var *= self.decay
                 temp_ar = xp.array(var)
+                adjust = m / max(m - 1., 1.)
                 temp_ar *= (1 - self.decay) * adjust
                 self.running_var += temp_ar
                 del temp_ar
@@ -134,7 +135,7 @@ class BatchRenormalizationFunction(function.Function):
         if xp is numpy:
             self.x_hat = _xhat(x, mean, self.std, expander)
             self.x_hat_renorm = self.x_hat * self.r[expander] + \
-                self.d[expander]
+                    self.d[expander]
             y = gamma * self.x_hat_renorm
             y += beta
         else:

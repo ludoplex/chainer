@@ -15,9 +15,9 @@ def _tensordot(a, b, a_axes, b_axes, c_axes=None):
     if a_col_ndim != b_row_ndim:
         raise ValueError('axes count mismatch')
     if a.ndim < a_col_ndim or b.ndim < b_row_ndim:
-        raise ValueError('dimension of input tensors must be '
-                         'greater equal to dot-axes count ({})'
-                         .format(a_col_ndim))
+        raise ValueError(
+            f'dimension of input tensors must be greater equal to dot-axes count ({a_col_ndim})'
+        )
     for a_axis, b_axis in zip(a_axes[1], b_axes[0]):
         if a.shape[a_axis] != b.shape[b_axis]:
             raise ValueError('shape mismatch')
@@ -35,7 +35,7 @@ def _tensordot(a, b, a_axes, b_axes, c_axes=None):
         if b_col_ndim != c_col_ndim:
             raise ValueError('axes count mismatch')
 
-        trans = [None for i in six.moves.range(y.ndim)]
+        trans = [None for _ in six.moves.range(y.ndim)]
         table_a = [1 if i in a_axes[0] else 0 for i in six.moves.range(a.ndim)]
         table_a = numpy.cumsum(table_a) - 1
         for i, c_axis in enumerate(c_axes[0]):
@@ -66,9 +66,7 @@ class TensorDot(function_node.FunctionNode):
             if len(axes) != 2:
                 raise ValueError('axes must be a pair of sequence of integers '
                                  'when it is a list or tuple.')
-        elif isinstance(axes, int):
-            pass
-        else:
+        elif not isinstance(axes, int):
             raise TypeError('axes must be a pair of sequence of integers or '
                             'an integer')
 

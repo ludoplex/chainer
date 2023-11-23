@@ -17,15 +17,9 @@ def force_array(x, dtype=None):
     # We need to convert such a value to a 0-dimension array because `Function`
     # object needs to return an `numpy.ndarray`.
     if numpy.isscalar(x):
-        if dtype is None:
-            return numpy.array(x)
-        else:
-            return numpy.array(x, dtype)
+        return numpy.array(x) if dtype is None else numpy.array(x, dtype)
     else:
-        if dtype is None:
-            return x
-        else:
-            return x.astype(dtype, copy=False)
+        return x if dtype is None else x.astype(dtype, copy=False)
 
 
 def force_type(dtype, value):

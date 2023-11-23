@@ -17,7 +17,7 @@ class SpatialTransformerSampler(function.Function):
 
     def check_type_forward(self, in_types):
         n_in = in_types.size()
-        type_check.expect(2 == n_in)
+        type_check.expect(n_in == 2)
 
         x_type = in_types[0]
         grid_type = in_types[1]
@@ -230,10 +230,7 @@ class SpatialTransformerSampler(function.Function):
         ggrid = xp.concatenate((gu[:, None], gv[:, None]), axis=1)
 
         # --- gx
-        if xp is numpy:
-            scatter_add = numpy.add.at
-        else:
-            scatter_add = cuda.cupyx.scatter_add
+        scatter_add = numpy.add.at if xp is numpy else cuda.cupyx.scatter_add
         gx = xp.zeros_like(x_pad)
         gy = gy.reshape(B, C, -1)
         for b in range(B):

@@ -7,18 +7,11 @@ from chainer.utils import type_check
 
 
 def _pair(x):
-    if hasattr(x, '__getitem__'):
-        return x
-    return x, x
+    return x if hasattr(x, '__getitem__') else (x, x)
 
 
 def _matmul(a, b, xp):
-    if xp is numpy:
-        # numpy 1.9 does not support matmul.
-        # So we use numpy.einsum instead of numpy.matmul.
-        return xp.einsum('ijk,ikl->ijl', a, b)
-    else:
-        return xp.matmul(a, b)
+    return xp.einsum('ijk,ikl->ijl', a, b) if xp is numpy else xp.matmul(a, b)
 
 
 class DepthwiseConvolution2D(function.Function):
@@ -29,7 +22,7 @@ class DepthwiseConvolution2D(function.Function):
 
     def check_type_forward(self, in_types):
         n_in = in_types.size()
-        type_check.expect(2 <= n_in, n_in <= 3)
+        type_check.expect(n_in >= 2, n_in <= 3)
 
         x_type = in_types[0]
         w_type = in_types[1]
@@ -92,9 +85,9 @@ class DepthwiseConvolution2D(function.Function):
 
         # (B, C*D, IY, IX) -> (C, D, B*IY*IX, D)
         gy_ = gy.reshape((B, C, D, IY * IX)).transpose(1, 2, 0, 3) \
-            .reshape((C, D, B * IY * IX))
+                .reshape((C, D, B * IY * IX))
         c_ = self.col.transpose(1, 0, 4, 5, 2, 3) \
-            .reshape((C, B * IY * IX, KY * KX))
+                .reshape((C, B * IY * IX, KY * KX))
         # (C, D, B*IY*IX), (C, B*IY*IX, KY*KX) -> (C, D, KY*KX)
         gW_ = _matmul(gy_, c_, xp)
         gW = gW_.reshape((C, D, KY, KX)).transpose(1, 0, 2, 3)
@@ -115,10 +108,9 @@ class DepthwiseConvolution2D(function.Function):
 
         if b is None:
             return gx, gW
-        else:
-            gy = xp.rollaxis(gy, 1, 4)
-            gb = gy.sum(axis=(0, 1, 2))
-            return gx, gW, gb
+        gy = xp.rollaxis(gy, 1, 4)
+        gb = gy.sum(axis=(0, 1, 2))
+        return gx, gW, gb
 
 
 def depthwise_convolution_2d(x, W, b=None, stride=1, pad=0):
@@ -187,7 +179,4 @@ def depthwise_convolution_2d(x, W, b=None, stride=1, pad=0):
 
     """
     func = DepthwiseConvolution2D(stride, pad)
-    if b is None:
-        return func(x, W)
-    else:
-        return func(x, W, b)
+    return func(x, W) if b is None else func(x, W, b)

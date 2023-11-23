@@ -18,8 +18,7 @@ class Prod(function.Function):
             self.axis = (axis,)
         elif isinstance(axis, tuple) and all(isinstance(a, int) for a in axis):
             if len(set(axis)) != len(axis):
-                raise ValueError('duplicate value in axis: ({})'.format(
-                    ', '.join(map(str, axis))))
+                raise ValueError(f"duplicate value in axis: ({', '.join(map(str, axis))})")
             self.axis = axis
         else:
             raise TypeError('None, int or tuple of int are required')

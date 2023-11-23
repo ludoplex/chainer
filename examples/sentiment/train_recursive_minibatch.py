@@ -121,7 +121,7 @@ class ThinStackRecursiveNet(chainer.Chain):
 
     def __call__(self, *inputs):
         batch = len(inputs) // 6
-        lefts = inputs[0: batch]
+        lefts = inputs[:batch]
         rights = inputs[batch: batch * 2]
         dests = inputs[batch * 2: batch * 3]
         labels = inputs[batch * 3: batch * 4]

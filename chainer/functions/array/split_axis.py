@@ -36,23 +36,17 @@ def _get_indices_or_sections(indices_or_sections):
         # Any sequence except numpy.ndarray
         ios = list(ios)
         is_seq = True
-    elif isinstance(indices_or_sections, six.integer_types):
-        # int
-        pass
-    else:
+    elif not isinstance(indices_or_sections, six.integer_types):
         raise TypeError(
-            'indices_or_sections must be integer or 1-D array.\n'
-            'Actual: {}'.format(type(indices_or_sections)))
+            f'indices_or_sections must be integer or 1-D array.\nActual: {type(indices_or_sections)}'
+        )
 
     if is_seq and chainer.is_debug():
         for p, n in six.moves.zip(ios, ios[1:]):
             if p > n:
                 raise ValueError('indices_or_sections must be sorted')
 
-    if is_seq:
-        return ios, None
-    else:
-        return None, ios
+    return (ios, None) if is_seq else (None, ios)
 
 
 class SplitAxis(function_node.FunctionNode):
@@ -89,10 +83,7 @@ class SplitAxis(function_node.FunctionNode):
 
         x, = inputs
         self._xp = cuda.get_array_module(x)
-        if self.indices is not None:
-            indices_or_sections = self.indices
-        else:
-            indices_or_sections = self.sections
+        indices_or_sections = self.sections if self.indices is None else self.indices
         ret = tuple(self._xp.split(x, indices_or_sections, self.axis))
         self._shapes = [r.shape for r in ret]
         return ret
@@ -110,19 +101,15 @@ class SplitAxis(function_node.FunctionNode):
             for i in six.moves.range(1, len(indices)):
                 if indices[i-1] == indices[i]:
                     return False  # Sequence with duplicate index
-        else:
-            if self.sections == 1:
-                return False  # 1
+        elif self.sections == 1:
+            return False  # 1
 
         # Workaround for iDeep segfault issue
         # See:
         #   https://github.com/chainer/chainer/pull/4281#issuecomment-365830630
         # TODO(niboshi): Remove this after iDeep is fixed.
         # Note: inputs[0].ndim is always 4.
-        if (self.axis == 1 or self.axis == -3) and inputs[0].shape[1] == 8:
-            return False
-
-        return True
+        return self.axis not in [1, -3] or inputs[0].shape[1] != 8
 
     def _forward_ideep(self, inputs):
         x, = inputs
@@ -183,6 +170,4 @@ def split_axis(x, indices_or_sections, axis, force_tuple=True):
 
     """
     res = SplitAxis(indices_or_sections, axis).apply((x,))
-    if force_tuple or len(res) != 1:
-        return res
-    return res[0]
+    return res if force_tuple or len(res) != 1 else res[0]

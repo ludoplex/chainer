@@ -63,9 +63,9 @@ class ImageCaptionModel(chainer.Chain):
         """Batch of images to captions."""
         imgs = Variable(imgs)
         img_feats = self.feat_extractor(imgs)
-        captions = self.lang_model.predict(
-            img_feats, bos=bos, eos=eos, max_caption_length=max_caption_length)
-        return captions
+        return self.lang_model.predict(
+            img_feats, bos=bos, eos=eos, max_caption_length=max_caption_length
+        )
 
 
 class VGG16FeatureExtractor(chainer.Chain):
@@ -89,8 +89,7 @@ class VGG16FeatureExtractor(chainer.Chain):
 
     def __call__(self, imgs):
         """Batch of images to image features."""
-        img_feats = self.cnn(imgs, [self.cnn_layer_name])[self.cnn_layer_name]
-        return img_feats
+        return self.cnn(imgs, [self.cnn_layer_name])[self.cnn_layer_name]
 
 
 class LSTMLanguageModel(chainer.Chain):
@@ -231,15 +230,14 @@ class NStepLSTMLanguageModel(chainer.Chain):
         # before computing the loss
         ts = F.concat(ts, axis=0)
 
-        loss = F.softmax_cross_entropy(ys, ts)
-        return loss
+        return F.softmax_cross_entropy(ys, ts)
 
     def predict(self, img_feats, bos, eos, max_caption_length):
         """Batch of image features to captions."""
         hx, cx, _ = self.reset(img_feats)
 
         captions = self.xp.full((img_feats.shape[0], 1), bos, dtype=np.int32)
-        for i in range(max_caption_length):
+        for _ in range(max_caption_length):
             # Create a list of the previous tokens to treat as inputs
             xs = [Variable(self.xp.atleast_1d(c[-1])) for c in captions]
 

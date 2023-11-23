@@ -115,10 +115,7 @@ class NegativeSamplingFunction(function_node.FunctionNode):
             'negative_sampling_forward'
         )(self.wx, n_in, self.sample_size + 1, self.ignore_mask[:, None])
 
-        if self.reduce == 'sum':
-            loss = loss.sum()
-        else:  # 'no':
-            loss = loss.sum(axis=1)
+        loss = loss.sum() if self.reduce == 'sum' else loss.sum(axis=1)
         return loss,
 
     def backward(self, indexes, grad_outputs):
@@ -149,11 +146,7 @@ class NegativeSamplingFunctionGrad(function_node.FunctionNode):
             ix = x[i]
 
             k = self.samples[i]
-            if self.reduce == 'sum':
-                igy = gloss
-            else:
-                igy = gloss[i]
-
+            igy = gloss if self.reduce == 'sum' else gloss[i]
             w = W[k]
             f = w.dot(ix)
 
@@ -247,26 +240,22 @@ class NegativeSamplingFunctionGrad(function_node.FunctionNode):
             ix = x[i]
             k = self.samples[i]
 
-            if self.reduce == 'sum':
-                igy = gy
-            else:
-                igy = gy[i]
-
+            igy = gy if self.reduce == 'sum' else gy[i]
             w = W[k]
             f = chainer.functions.flatten(
                 chainer.functions.matmul(w, ix[:, None])) * pos_neg_mask
             sigf = chainer.functions.sigmoid(f)
             g = chainer.functions.broadcast_to(igy, f.shape) * sigf \
-                * pos_neg_mask
+                    * pos_neg_mask
 
             dgW_dg = chainer.functions.flatten(
                 chainer.functions.matmul(ggW[k], ix[:, None])) * pos_neg_mask
             dgW_df = chainer.functions.broadcast_to(igy, f.shape) \
-                * _sigmoid_grad(f, sigf, dgW_dg) * pos_neg_mask
+                    * _sigmoid_grad(f, sigf, dgW_dg) * pos_neg_mask
             dgx_dg = chainer.functions.flatten(
                 chainer.functions.matmul(ggx[i][None, :], w, transb=True))
             dgx_df = chainer.functions.broadcast_to(igy, f.shape) \
-                * _sigmoid_grad(f, sigf, dgx_dg)
+                    * _sigmoid_grad(f, sigf, dgx_dg)
 
             if 0 in indexes:
                 # deriative of gx

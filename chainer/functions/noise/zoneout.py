@@ -22,11 +22,7 @@ class Zoneout(function_node.FunctionNode):
 
         h, x = inputs
         xp = cuda.get_array_module(*x)
-        if xp is numpy:
-            flag_x = xp.random.rand(*x.shape) >= self.zoneout_ratio
-        else:
-            flag_x = (xp.random.rand(*x.shape) >=
-                      self.zoneout_ratio)
+        flag_x = xp.random.rand(*x.shape) >= self.zoneout_ratio
         self.flag_h = xp.ones_like(flag_x) ^ flag_x
         self.flag_x = flag_x
         return h * self.flag_h + x * self.flag_x,
@@ -73,6 +69,4 @@ def zoneout(h, x, ratio=.5, **kwargs):
         'Use chainer.using_config')
     argument.assert_kwargs_empty(kwargs)
 
-    if configuration.config.train:
-        return Zoneout(ratio).apply((h, x))[0]
-    return x
+    return Zoneout(ratio).apply((h, x))[0] if configuration.config.train else x

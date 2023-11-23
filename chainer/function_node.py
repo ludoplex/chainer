@@ -222,17 +222,14 @@ Use apply() method instead.\
 
         """
         input_vars = [chainer.as_variable(x) for x in inputs]
-        in_data = tuple([x.data for x in input_vars])
-        requires_grad = any([x.requires_grad for x in input_vars])
+        in_data = tuple(x.data for x in input_vars)
+        requires_grad = any(x.requires_grad for x in input_vars)
 
         # Check for input array types
         if not chainer.is_arrays_compatible(in_data):
             raise TypeError(
-                'incompatible array types are mixed in the forward input '
-                '({}).\n'
-                'Actual: {}'.format(
-                    self.label,
-                    ', '.join(str(type(x)) for x in in_data)))
+                f"incompatible array types are mixed in the forward input ({self.label}).\nActual: {', '.join(str(type(x)) for x in in_data)}"
+            )
 
         is_debug = chainer.is_debug()
         if is_debug:
@@ -260,16 +257,13 @@ Use apply() method instead.\
         # Check for output array types
         if not isinstance(outputs, tuple):
             raise TypeError(
-                'forward output must be a tuple ({})\n'
-                'Actual: {}'.format(self.label, type(outputs)))
+                f'forward output must be a tuple ({self.label})\nActual: {type(outputs)}'
+            )
 
         if not chainer.is_arrays_compatible(outputs):
             raise TypeError(
-                'incompatible array types are mixed in the forward output '
-                '({}).\n'
-                'Actual: {}'.format(
-                    self.label,
-                    ', '.join(str(type(x)) for x in outputs)))
+                f"incompatible array types are mixed in the forward output ({self.label}).\nActual: {', '.join(str(type(x)) for x in outputs)}"
+            )
 
         for hook in hooks:
             hook.forward_postprocess(self, in_data)
@@ -279,22 +273,20 @@ Use apply() method instead.\
             if any(out.dtype.kind == 'f' and
                    cuda.get_array_module(out).isnan(out).any()
                    for out in outputs):
-                msg = ('NaN is detected on forward computation of '
-                       '{}'.format(self.label))
+                msg = f'NaN is detected on forward computation of {self.label}'
                 raise RuntimeError(msg)
 
-        ret = tuple([variable.Variable(y, requires_grad=requires_grad)
-                     for y in outputs])
+        ret = tuple(variable.Variable(y, requires_grad=requires_grad) for y in outputs)
 
         if configuration.config.enable_backprop:
             # Topological ordering
-            self.rank = max([x.rank for x in input_vars]) if input_vars else 0
+            self.rank = max((x.rank for x in input_vars), default=0)
             # Add backward edges
             for y in ret:
                 y.creator_node = self
-            self.inputs = tuple([x.node for x in input_vars])
+            self.inputs = tuple(x.node for x in input_vars)
             # Add forward edges (must be weak references)
-            self.outputs = tuple([weakref.ref(y.node) for y in ret])
+            self.outputs = tuple(weakref.ref(y.node) for y in ret)
 
             if self._input_indexes_to_retain is not None:
                 for index in self._input_indexes_to_retain:
@@ -549,27 +541,26 @@ Use apply() method instead.\
 
         len_gxs = len(gxs)
         if len_gxs == len(self.inputs):
-            gxs = tuple([gxs[i] for i in target_input_indexes])
+            gxs = tuple(gxs[i] for i in target_input_indexes)
         elif len_gxs != len(target_input_indexes):
             raise ValueError(
-                'number of gradients returned by %s (%s) is incorrect.'
-                % (self._impl_name, self.label))
+                f'number of gradients returned by {self._impl_name} ({self.label}) is incorrect.'
+            )
 
-        if self.lazy_grad_sum:
-            gxs_output = ()
-            for i, (gx, g_input) in enumerate(six.moves.zip(gxs, grad_inputs)):
-                sum_gx = _backprop_utils.concat_variable(gx, g_input)
-                j = target_input_indexes[i]
-                if self.inputs[j].creator is None and \
+        if not self.lazy_grad_sum:
+            return tuple(
+                gx if g_input is None else g_input if gx is None else gx + g_input
+                for gx, g_input in six.moves.zip(gxs, grad_inputs)
+            )
+        gxs_output = ()
+        for i, (gx, g_input) in enumerate(six.moves.zip(gxs, grad_inputs)):
+            sum_gx = _backprop_utils.concat_variable(gx, g_input)
+            j = target_input_indexes[i]
+            if self.inputs[j].creator is None and \
                         isinstance(sum_gx, tuple):
-                    sum_gx = chainer.functions.add(*sum_gx)
-                gxs_output += sum_gx,
-            return gxs_output
-        else:
-            return tuple([gx if g_input is None else
-                          g_input if gx is None else
-                          gx + g_input
-                          for gx, g_input in six.moves.zip(gxs, grad_inputs)])
+                sum_gx = chainer.functions.add(*sum_gx)
+            gxs_output += sum_gx,
+        return gxs_output
 
     def get_retained_inputs(self):
         """Returns a tuple of retained input variables.
@@ -582,8 +573,9 @@ Use apply() method instead.\
 
         """
         inputs = self.inputs
-        return tuple([inputs[index].get_variable()
-                      for index in self._input_indexes_to_retain])
+        return tuple(
+            inputs[index].get_variable() for index in self._input_indexes_to_retain
+        )
 
     def get_retained_outputs(self):
         """Returns a tuple of retained output variables.
@@ -651,7 +643,7 @@ Use apply() method instead.\
             name = hook.name
         hooks = self.local_function_hooks
         if name in hooks:
-            raise KeyError('Hook %s already exists' % name)
+            raise KeyError(f'Hook {name} already exists')
         hooks[name] = hook
         hook.added(function=self)
 
@@ -662,11 +654,10 @@ Use apply() method instead.\
             name (str): The name of the function hook to be unregistered.
 
         """
-        if name in self.local_function_hooks:
-            self.local_function_hooks[name].deleted(function=self)
-            del self.local_function_hooks[name]
-        else:
-            raise KeyError('Hook %s does not exist' % name)
+        if name not in self.local_function_hooks:
+            raise KeyError(f'Hook {name} does not exist')
+        self.local_function_hooks[name].deleted(function=self)
+        del self.local_function_hooks[name]
 
 
 def grad(outputs, inputs, grad_outputs=None, grad_inputs=None, set_grad=False,
@@ -733,19 +724,17 @@ def grad(outputs, inputs, grad_outputs=None, grad_inputs=None, set_grad=False,
 
     """
     if not isinstance(outputs, (tuple, list)):
-        raise TypeError(
-            'outputs must be a tuple or a list, not {}.'.format(type(outputs)))
+        raise TypeError(f'outputs must be a tuple or a list, not {type(outputs)}.')
     if not isinstance(inputs, (tuple, list)):
-        raise TypeError(
-            'inputs must be a tuple or a list, not {}.'.format(type(inputs)))
+        raise TypeError(f'inputs must be a tuple or a list, not {type(inputs)}.')
     if not (grad_outputs is None or isinstance(grad_outputs, (tuple, list))):
         raise TypeError(
-            'grad_outputs must be a tuple or a list or None, not {}.'.format(
-                type(grad_outputs)))
+            f'grad_outputs must be a tuple or a list or None, not {type(grad_outputs)}.'
+        )
     if not (grad_inputs is None or isinstance(grad_inputs, (tuple, list))):
         raise TypeError(
-            'grad_inputs must be a tuple or a list or None, not {}.'.format(
-                type(grad_inputs)))
+            f'grad_inputs must be a tuple or a list or None, not {type(grad_inputs)}.'
+        )
 
     for v in outputs:
         # Raise error here if v is created by Function.backward.
@@ -845,7 +834,7 @@ def _backprop(outputs, inputs, grad_required, retain_grad, grads, loss_scale):
         if creator is not None:
             push_candidate(creator)
 
-    input_nodes = set(x.node for x in inputs)
+    input_nodes = {x.node for x in inputs}
 
     while candidate_funcs:
         func = pop_candidate()
@@ -888,9 +877,10 @@ def _backprop(outputs, inputs, grad_required, retain_grad, grads, loss_scale):
             continue
 
         # Do backward
-        gys = tuple([gy if not isinstance(gy, tuple) else
-                     chainer.functions.add(*gy)
-                     for gy in gys])
+        gys = tuple(
+            gy if not isinstance(gy, tuple) else chainer.functions.add(*gy)
+            for gy in gys
+        )
 
         # Call pre-backward hooks
         hooks = chainer.get_function_hooks()
@@ -899,9 +889,8 @@ def _backprop(outputs, inputs, grad_required, retain_grad, grads, loss_scale):
             hooks.update(func.local_function_hooks)
         hooks = hooks.values()  # avoid six for performance
 
-        in_data = tuple([x.data for x in func.inputs])
-        out_grad_data = tuple(
-            [None if g is None else g.data for g in gys])
+        in_data = tuple(x.data for x in func.inputs)
+        out_grad_data = tuple(None if g is None else g.data for g in gys)
         cuda.get_device_from_array(*in_data).use()
 
         for hook in hooks:

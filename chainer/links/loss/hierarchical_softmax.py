@@ -33,8 +33,8 @@ class TreeParser(object):
         self.codes = {}
         self._parse(tree)
 
-        assert(len(self.path) == 0)
-        assert(len(self.code) == 0)
+        assert not self.path
+        assert not self.code
         assert(len(self.paths) == len(self.codes))
 
     def _parse(self, node):

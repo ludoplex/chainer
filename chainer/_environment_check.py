@@ -22,8 +22,7 @@ def _check_osx_numpy_backend():
     if sys.platform != 'darwin':
         return
 
-    blas_opt_info = numpy.distutils.system_info.get_info('blas_opt')
-    if blas_opt_info:
+    if blas_opt_info := numpy.distutils.system_info.get_info('blas_opt'):
         extra_link_args = blas_opt_info.get('extra_link_args')
         if extra_link_args and '-Wl,Accelerate' in extra_link_args:
             warnings.warn('''\

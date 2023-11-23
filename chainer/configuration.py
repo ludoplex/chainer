@@ -78,7 +78,7 @@ def _print_attrs(obj, keys, file):
     max_len = max(len(key) for key in keys)
     for key in keys:
         spacer = ' ' * (max_len - len(key))
-        file.write(u'{} {}{}\n'.format(key, spacer, getattr(obj, key)))
+        file.write(f'{key} {spacer}{getattr(obj, key)}\n')
 
 
 global_config = GlobalConfig()

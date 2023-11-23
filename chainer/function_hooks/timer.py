@@ -127,10 +127,11 @@ class TimerHook(function_hook.FunctionHook):
             elapsed_time = self._humanized_time(record['elapsed_time'])
             occurrence = str(record['occurrence'])
             entries.append([function_name, elapsed_time, occurrence])
-        entry_widths = []
-        entry_widths.append(max(len(f) for f, _, _ in entries))
-        entry_widths.append(max(len(e) for _, e, _ in entries))
-        entry_widths.append(max(len(o) for _, _, o in entries))
+        entry_widths = [
+            max((len(f) for f, _, _ in entries)),
+            max((len(e) for _, e, _ in entries)),
+            max((len(o) for _, _, o in entries)),
+        ]
         template = '  '.join('{:>%d}' % w for w in entry_widths)
         for function_name, elapsed_time, occurrence in entries:
             line = template.format(function_name, elapsed_time, occurrence)

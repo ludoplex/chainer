@@ -29,11 +29,7 @@ def _is_shape(value):
 
 def _ensure_shape_dtype(value):
     # Return value paired with dtype FP32 if it is a shape.
-    if _is_shape(value):
-        return value, 'f'
-    # Otherwise, returns it with assuming a shape-dtype pair.
-    else:
-        return value
+    return (value, 'f') if _is_shape(value) else value
 
 
 class Link(object):
@@ -252,8 +248,8 @@ Assign a Parameter object directly to an attribute within a \
 ''', DeprecationWarning)
         if name in self.__dict__:
             raise AttributeError(
-                'cannot register a new parameter %s: attribute exists'
-                % name)
+                f'cannot register a new parameter {name}: attribute exists'
+            )
         if initializer is None:
             initializer = initializers.NaN(dtype)
         param = variable.Parameter(initializer, shape)
@@ -275,8 +271,8 @@ Assign a Parameter object directly to an attribute within a \
         d = self.__dict__
         if name in d:
             raise AttributeError(
-                'cannot register a new persistent value %s: attribute exists'
-                % name)
+                f'cannot register a new persistent value {name}: attribute exists'
+            )
         self._persistent.add(name)
         self._params.discard(name)
         d[name] = value
@@ -349,8 +345,8 @@ Assign a Parameter object directly to an attribute within a \
             return ret
         else:
             raise ValueError(
-                'The \'mode\' argument should be either \'init\','
-                '\'copy\', or \'share\'. But {} was given.'.format(mode))
+                f"The \'mode\' argument should be either \'init\',\'copy\', or \'share\'. But {mode} was given."
+            )
 
     def to_cpu(self):
         """Copies parameter variables and persistent values to CPU.
@@ -456,7 +452,7 @@ Assign a Parameter object directly to an attribute within a \
         d = self.__dict__
         for name in self._params:
             if include_uninit or d[name].data is not None:
-                yield '/' + name, d[name]
+                yield (f'/{name}', d[name])
 
     def links(self, skipself=False):
         """Returns a generator of all links under the hierarchy.
@@ -493,8 +489,6 @@ Assign a Parameter object directly to an attribute within a \
             A generator object that generates all child links.
 
         """
-        if 0:
-            yield
 
     def copyparams(self, link):
         """Copies all parameters from given link.
@@ -669,8 +663,8 @@ Assign a Parameter object directly to an attribute within a \
             return ret
         if mode not in ['init', 'copy', 'share']:
             raise ValueError(
-                'The \'mode\' argument should be either \'init\','
-                '\'copy\', or \'share\'. But {} was given.'.format(mode))
+                f"The \'mode\' argument should be either \'init\',\'copy\', or \'share\'. But {mode} was given."
+            )
         link = self
         for _ in range(n_repeat):
             ret.append(link.copy(mode))
@@ -695,9 +689,8 @@ Assign a Parameter object directly to an attribute within a \
         for name, param in self.namedparams():
             if param.array is None:
                 warnings.warn(
-                    'Parameter \'{}\' has not been initialized, so the '
-                    'resulting count will not include the number of parameters'
-                    ' in it.'.format(name))
+                    f"Parameter \'{name}\' has not been initialized, so the resulting count will not include the number of parameters in it."
+                )
                 continue
             size += param.size
         return size
@@ -798,8 +791,7 @@ class Chain(Link):
     def __setattr__(self, name, value):
         if self.within_init_scope and isinstance(value, Link):
             if hasattr(self, name):
-                raise AttributeError(
-                    'cannot register a new link %s: attribute exists' % name)
+                raise AttributeError(f'cannot register a new link {name}: attribute exists')
             value.name = name
             self._children.add(name)
         super(Chain, self).__setattr__(name, value)
@@ -843,8 +835,7 @@ Assign a Link object directly to an attribute within a \
 "with link.init_scope():" block instead.
         ''', DeprecationWarning)
         if name in self.__dict__:
-            raise AttributeError(
-                'cannot register a new link %s: attribute exists' % name)
+            raise AttributeError(f'cannot register a new link {name}: attribute exists')
         if not isinstance(link, Link):
             raise TypeError('cannot register a non-link object as a child')
         with self.init_scope():
@@ -884,19 +875,16 @@ Assign a Link object directly to an attribute within a \
         return self
 
     def params(self, include_uninit=True):
-        for param in super(Chain, self).params(include_uninit):
-            yield param
+        yield from super(Chain, self).params(include_uninit)
         d = self.__dict__
         for name in self._children:
-            for param in d[name].params(include_uninit):
-                yield param
+            yield from d[name].params(include_uninit)
 
     def namedparams(self, include_uninit=True):
-        for ret in super(Chain, self).namedparams(include_uninit):
-            yield ret
+        yield from super(Chain, self).namedparams(include_uninit)
         d = self.__dict__
         for name in self._children:
-            prefix = '/' + name
+            prefix = f'/{name}'
             for path, param in d[name].namedparams(include_uninit):
                 yield prefix + path, param
 
@@ -905,8 +893,7 @@ Assign a Link object directly to an attribute within a \
             yield self
         d = self.__dict__
         for name in self._children:
-            for link in d[name].links():
-                yield link
+            yield from d[name].links()
 
     def namedlinks(self, skipself=False):
         if not skipself:
@@ -914,9 +901,9 @@ Assign a Link object directly to an attribute within a \
         d = self.__dict__
         for name in self._children:
             child = d[name]
-            prefix = '/' + name
+            prefix = f'/{name}'
             yield prefix, child
-            for path, link in d[name].namedlinks(True):
+            for path, link in child.namedlinks(True):
                 yield prefix + path, link
 
     def children(self):
@@ -1048,15 +1035,12 @@ class ChainList(Link):
         return self
 
     def params(self, include_uninit=True):
-        for param in super(ChainList, self).params(include_uninit):
-            yield param
+        yield from super(ChainList, self).params(include_uninit)
         for link in self._children:
-            for param in link.params(include_uninit):
-                yield param
+            yield from link.params(include_uninit)
 
     def namedparams(self, include_uninit=True):
-        for ret in super(ChainList, self).namedparams(include_uninit):
-            yield ret
+        yield from super(ChainList, self).namedparams(include_uninit)
         for idx, link in enumerate(self._children):
             prefix = '/%d' % idx
             for path, param in link.namedparams(include_uninit):
@@ -1066,8 +1050,7 @@ class ChainList(Link):
         if not skipself:
             yield self
         for child in self._children:
-            for link in child.links():
-                yield link
+            yield from child.links()
 
     def namedlinks(self, skipself=False):
         if not skipself:
@@ -1079,8 +1062,7 @@ class ChainList(Link):
                 yield prefix + path, link
 
     def children(self):
-        for child in self._children:
-            yield child
+        yield from self._children
 
     def copyparams(self, link):
         super(ChainList, self).copyparams(link)

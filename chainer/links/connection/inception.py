@@ -78,5 +78,4 @@ class Inception(link.Chain):
         out5 = self.conv5(relu.relu(self.proj5(x)))
         pool = self.projp(max_pooling_2d.max_pooling_2d(
             x, 3, stride=1, pad=1))
-        y = relu.relu(concat.concat((out1, out3, out5, pool), axis=1))
-        return y
+        return relu.relu(concat.concat((out1, out3, out5, pool), axis=1))

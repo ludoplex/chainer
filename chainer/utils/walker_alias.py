@@ -25,8 +25,7 @@ class WalkerAlias(object):
         threshold = numpy.ndarray(len(probs), numpy.float32)
         values = numpy.ndarray(len(probs) * 2, numpy.int32)
         il, ir = 0, 0
-        pairs = list(zip(prob, range(len(probs))))
-        pairs.sort()
+        pairs = sorted(zip(prob, range(len(probs))))
         for prob, i in pairs:
             p = prob * len(probs)
             while p > 1 and ir < il:
@@ -75,10 +74,7 @@ class WalkerAlias(object):
             if it is in GPU mode the return value is a :class:`cupy.ndarray`
             object.
         """
-        if self.use_gpu:
-            return self.sample_gpu(shape)
-        else:
-            return self.sample_cpu(shape)
+        return self.sample_gpu(shape) if self.use_gpu else self.sample_cpu(shape)
 
     def sample_cpu(self, shape):
         ps = numpy.random.uniform(0, 1, shape)
@@ -89,7 +85,7 @@ class WalkerAlias(object):
 
     def sample_gpu(self, shape):
         ps = cuda.cupy.random.uniform(size=shape, dtype=numpy.float32)
-        vs = cuda.elementwise(
+        return cuda.elementwise(
             'T ps, raw T threshold , raw S values, int32 b',
             'int32 vs',
             '''
@@ -102,6 +98,5 @@ class WalkerAlias(object):
             int lr = threshold[index] < pb - index;
             vs = values[index * 2 + lr];
             ''',
-            'walker_alias_sample'
+            'walker_alias_sample',
         )(ps, self.threshold, self.values, len(self.threshold))
-        return vs

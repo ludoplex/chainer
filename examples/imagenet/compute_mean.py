@@ -13,7 +13,7 @@ def compute_mean(dataset):
     N = len(dataset)
     for i, (image, _) in enumerate(dataset):
         sum_image += image
-        sys.stderr.write('{} / {}\r'.format(i, N))
+        sys.stderr.write(f'{i} / {N}\r')
         sys.stderr.flush()
     sys.stderr.write('\n')
     return sum_image / N

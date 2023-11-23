@@ -166,10 +166,10 @@ class StandardUpdater(_updater.Updater):
     def serialize(self, serializer):
         """Serializes the current state of the updater object."""
         for name, iterator in six.iteritems(self._iterators):
-            iterator.serialize(serializer['iterator:' + name])
+            iterator.serialize(serializer[f'iterator:{name}'])
 
         for name, optimizer in six.iteritems(self._optimizers):
-            optimizer.serialize(serializer['optimizer:' + name])
-            optimizer.target.serialize(serializer['model:' + name])
+            optimizer.serialize(serializer[f'optimizer:{name}'])
+            optimizer.target.serialize(serializer[f'model:{name}'])
 
         self.iteration = serializer('iteration', self.iteration)

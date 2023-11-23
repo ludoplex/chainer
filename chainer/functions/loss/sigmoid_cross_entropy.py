@@ -45,7 +45,7 @@ class SigmoidCrossEntropy(function_node.FunctionNode):
             self.ignore_mask *
             (x * (t - (x >= 0)) - xp.log1p(xp.exp(-xp.abs(x)))))
 
-        if not self.reduce == 'mean':
+        if self.reduce != 'mean':
             return utils.force_array(loss.astype(x.dtype)),
 
         if self.normalize:

@@ -126,10 +126,7 @@ class Evaluator(extension.Extension):
         """
         # set up a reporter
         reporter = reporter_module.Reporter()
-        if self.name is not None:
-            prefix = self.name + '/'
-        else:
-            prefix = ''
+        prefix = f'{self.name}/' if self.name is not None else ''
         for name, target in six.iteritems(self._targets):
             reporter.add_observer(prefix + name, target)
             reporter.add_observers(prefix + name,

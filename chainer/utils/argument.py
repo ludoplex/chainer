@@ -13,8 +13,7 @@ def parse_kwargs(kwargs, *name_and_values):
     if kwargs:
         caller = inspect.stack()[1]
         args = ', '.join(repr(arg) for arg in sorted(kwargs.keys()))
-        message = caller[3] + \
-            '() got unexpected keyword argument(s) {}'.format(args)
+        message = f'{caller[3]}() got unexpected keyword argument(s) {args}'
         raise TypeError(message)
     return tuple(values)
 

@@ -94,16 +94,14 @@ class _RetrieveAsCaffeModel(object):
                 in the exported Caffe model.
 
         """
-        label = '{}-{}'.format(layer.label, layer.rank)
+        label = f'{layer.label}-{layer.rank}'
         d = self.naming_map[label]
         if layer not in d.keys():
             d[layer] = len(d) + 1
-        return '{}-{}'.format(label, d[layer])
+        return f'{label}-{d[layer]}'
 
     def _get_parent_name(self, parent_):
-        if parent_ is None:
-            return 'data'
-        return self._get_layer_name(parent_)
+        return 'data' if parent_ is None else self._get_layer_name(parent_)
 
     def _gen_layer_prototxt(self, layer_params, name='layer', depth=0,
                             indent=2):
@@ -112,16 +110,16 @@ class _RetrieveAsCaffeModel(object):
             indent_s = ' ' * ((depth + 1) * indent)
             for key, val in layer_params.items():
                 s += indent_s + \
-                    self._gen_layer_prototxt(val, name=key, depth=depth + 1)
+                        self._gen_layer_prototxt(val, name=key, depth=depth + 1)
             s += ' ' * (depth * indent)
             s += '}\n'
             return s
         elif isinstance(layer_params, (int, float)):
-            return '{}: {}\n'.format(name, layer_params)
+            return f'{name}: {layer_params}\n'
         elif isinstance(layer_params, bool):
-            return '{}: {}\n'.format(name, 'true' if layer_params else 'false')
+            return f"{name}: {'true' if layer_params else 'false'}\n"
         elif isinstance(layer_params, str):
-            return '{}: "{}"\n'.format(name, layer_params)
+            return f'{name}: "{layer_params}"\n'
         elif isinstance(layer_params, list):
             s = ''
             indent_s = ' ' * depth * indent
@@ -131,7 +129,7 @@ class _RetrieveAsCaffeModel(object):
                 s += self._gen_layer_prototxt(t, name=name, depth=depth + 1)
             return s
         else:
-            raise ValueError('Unsupported type: ' + str(type(layer_params)))
+            raise ValueError(f'Unsupported type: {str(type(layer_params))}')
 
     def dump_function_object(self, func, prototxt, net):
         assert isinstance(func, _function_types)
@@ -143,9 +141,7 @@ class _RetrieveAsCaffeModel(object):
         params['name'] = layer_name
         params['bottom'] = parent_layer_names
         params['top'] = [layer_name]
-        layer = None
-        if net is not None:
-            layer = net.layer.add()
+        layer = net.layer.add() if net is not None else None
         if func.label == 'LinearFunction':
             if len(func.inputs) == 2:
                 _, W = func.inputs
@@ -250,10 +246,8 @@ class _RetrieveAsCaffeModel(object):
                 _add_blob(layer, [var.data.size], var.data)
                 _add_blob(layer, [1], numpy.ones((1,), dtype='f'))
 
-            if gamma.data is None and beta.data is None:
-                pass
-            else:
-                bn_name = layer_name + '_bn'
+            if gamma.data is not None or beta.data is not None:
+                bn_name = f'{layer_name}_bn'
                 params['name'] = bn_name
                 params['top'] = [bn_name]
                 if prototxt is not None:
@@ -321,8 +315,8 @@ class _RetrieveAsCaffeModel(object):
 
         else:
             raise Exception(
-                'Cannot convert, name={}, rank={}, label={}, inputs={}'.format(
-                    layer_name, func.rank, func.label, parent_layer_names))
+                f'Cannot convert, name={layer_name}, rank={func.rank}, label={func.label}, inputs={parent_layer_names}'
+            )
         if prototxt is not None:
             prototxt.write(self._gen_layer_prototxt(params))
 
@@ -336,13 +330,11 @@ class _RetrieveAsCaffeModel(object):
     def __call__(self, name, inputs, outputs):
         dumped_list = _dump_graph(outputs)
         f = None
-        net = None
-        if self.caffemodel is not None:
-            net = caffe_pb.NetParameter()
+        net = caffe_pb.NetParameter() if self.caffemodel is not None else None
         try:
             if self.prototxt is not None:
                 f = open(self.prototxt, 'wt')
-                f.write('name: "{}"\n'.format(name))
+                f.write(f'name: "{name}"\n')
                 assert len(inputs) == 1
                 f.write('layer {\n'
                         '  name: "data"\n'
@@ -350,7 +342,7 @@ class _RetrieveAsCaffeModel(object):
                         '  top: "data"\n'
                         '  input_param { shape: {')
                 for i in inputs[0].shape:
-                    f.write(' dim: ' + str(i))
+                    f.write(f' dim: {str(i)}')
                 f.write(' } }\n'
                         '} \n')
             for i in dumped_list:
@@ -364,7 +356,7 @@ class _RetrieveAsCaffeModel(object):
                 f.write(net.SerializeToString())
             if self.debug:
                 import google.protobuf.text_format
-                with open(self.caffemodel + ".txt", 'w') as f:
+                with open(f"{self.caffemodel}.txt", 'w') as f:
                     f.write(google.protobuf.text_format.MessageToString(net))
 
 

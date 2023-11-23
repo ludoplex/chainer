@@ -100,25 +100,27 @@ class TreeLSTM(function.Function):
             self.c = self.a * self.i + sum(f * c for f, c in zip(self.fs, cs))
             h = self.o * numpy.tanh(self.c)
         else:
-            preamble = _preamble + \
-                ' '.join('T af{} = sigmoid(f{});'.format(j, j)
-                         for j in six.moves.range(1, n_ary + 1))
-            cells_str = ', '.join('T c{}'.format(j)
-                                  for j in six.moves.range(1, n_ary + 1))
-            fgates_str = ', '.join('T f{}'.format(j)
-                                   for j in six.moves.range(1, n_ary + 1))
-            fc_calc_str = ' + '.join('af{} * c{}'.format(j, j)
-                                     for j in six.moves.range(1, n_ary + 1))
+            preamble = _preamble + ' '.join(
+                f'T af{j} = sigmoid(f{j});' for j in six.moves.range(1, n_ary + 1)
+            )
+            cells_str = ', '.join(f'T c{j}' for j in six.moves.range(1, n_ary + 1))
+            fgates_str = ', '.join(f'T f{j}' for j in six.moves.range(1, n_ary + 1))
+            fc_calc_str = ' + '.join(
+                f'af{j} * c{j}' for j in six.moves.range(1, n_ary + 1)
+            )
             self.c, h = cuda.elementwise(
-                'T a, T i_, T o, {}, {}'.format(cells_str, fgates_str),
+                f'T a, T i_, T o, {cells_str}, {fgates_str}',
                 'T c, T h',
                 '''
                     COMMON_ROUTINE;
                     c = aa * ai + {};
                     h = ao * tanh(c);
-                '''.format(fc_calc_str),
-                'treelstm_fwd', preamble=preamble)(
-                    a, i, o, *(list(cs) + fs))
+                '''.format(
+                    fc_calc_str
+                ),
+                'treelstm_fwd',
+                preamble=preamble,
+            )(a, i, o, *(list(cs) + fs))
 
         return self.c, h
 
@@ -155,27 +157,23 @@ class TreeLSTM(function.Function):
             a, i, o = gates[:3]
             fs = gates[3:]
             gcs = [xp.empty_like(c) for c in cs]
-            preamble = _preamble + \
-                ' '.join('T af{} = sigmoid(f{});'.format(j, j)
-                         for j in six.moves.range(1, n_ary + 1))
-            cells_str = ', '.join('T c{}'.format(j)
-                                  for j in six.moves.range(1, n_ary + 1))
-            fgates_str = ', '.join('T f{}'.format(j)
-                                   for j in six.moves.range(1, n_ary + 1))
-            g_cells_str = ', '.join('T gc{}'.format(j)
-                                    for j in six.moves.range(1, n_ary + 1))
-            g_fgates_str = ', '.join('T gf{}'.format(j)
-                                     for j in six.moves.range(1, n_ary + 1))
+            preamble = _preamble + ' '.join(
+                f'T af{j} = sigmoid(f{j});' for j in six.moves.range(1, n_ary + 1)
+            )
+            cells_str = ', '.join(f'T c{j}' for j in six.moves.range(1, n_ary + 1))
+            fgates_str = ', '.join(f'T f{j}' for j in six.moves.range(1, n_ary + 1))
+            g_cells_str = ', '.join(f'T gc{j}' for j in six.moves.range(1, n_ary + 1))
+            g_fgates_str = ', '.join(f'T gf{j}' for j in six.moves.range(1, n_ary + 1))
             gf_calc_str = '\n    '.join(
-                'gf{} = temp * c{} * grad_sigmoid(af{});'.format(j, j, j)
-                for j in six.moves.range(1, n_ary + 1))
+                f'gf{j} = temp * c{j} * grad_sigmoid(af{j});'
+                for j in six.moves.range(1, n_ary + 1)
+            )
             gc_calc_str = '\n    '.join(
-                'gc{} = temp * af{};'.format(j, j)
-                for j in six.moves.range(1, n_ary + 1))
+                f'gc{j} = temp * af{j};' for j in six.moves.range(1, n_ary + 1)
+            )
             cuda.elementwise(
-                'T c, T gc, T gh, T a, T i_, T o, ' +
-                '{}, {}'.format(cells_str, fgates_str),
-                'T ga, T gi, T go, {}, {}'.format(g_cells_str, g_fgates_str),
+                f'T c, T gc, T gh, T a, T i_, T o, {cells_str}, {fgates_str}',
+                f'T ga, T gi, T go, {g_cells_str}, {g_fgates_str}',
                 '''
                     COMMON_ROUTINE;
                     T co = tanh(c);
@@ -185,10 +183,12 @@ class TreeLSTM(function.Function):
                     go = gh * co * grad_sigmoid(ao);
                     {}
                     {}
-                '''.format(gf_calc_str, gc_calc_str),
-                'treelstm_bwd', preamble=preamble)(
-                    self.c, gc, gh, a, i, o,
-                    *(list(cs) + fs + [ga, gi, go] + gcs + gfs))
+                '''.format(
+                    gf_calc_str, gc_calc_str
+                ),
+                'treelstm_bwd',
+                preamble=preamble,
+            )(self.c, gc, gh, a, i, o, *(list(cs) + fs + [ga, gi, go] + gcs + gfs))
 
         return list(gcs) + [gx]
 

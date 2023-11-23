@@ -52,9 +52,7 @@ class SubDataset(dataset_mixin.DatasetMixin):
         self._finish = finish
         self._size = finish - start
         if order is not None and len(order) != len(dataset):
-            msg = ('order option must have the same length as the base '
-                   'dataset: len(order) = {} while len(dataset) = {}'.format(
-                       len(order), len(dataset)))
+            msg = f'order option must have the same length as the base dataset: len(order) = {len(order)} while len(dataset) = {len(dataset)}'
             raise ValueError(msg)
         self._order = order
 
@@ -62,13 +60,11 @@ class SubDataset(dataset_mixin.DatasetMixin):
         return self._size
 
     def get_example(self, i):
-        if i >= 0:
-            if i >= self._size:
-                raise IndexError('dataset index out of range')
+        if i >= 0 and i >= self._size or i < 0 and i < -self._size:
+            raise IndexError('dataset index out of range')
+        elif i >= 0:
             index = self._start + i
         else:
-            if i < -self._size:
-                raise IndexError('dataset index out of range')
             index = self._finish + i
 
         if self._order is not None:
@@ -97,8 +93,7 @@ def split_dataset(dataset, split_at, order=None):
     """
     n_examples = len(dataset)
     if not isinstance(split_at, (six.integer_types, numpy.integer)):
-        raise TypeError('split_at must be int, got {} instead'
-                        .format(type(split_at)))
+        raise TypeError(f'split_at must be int, got {type(split_at)} instead')
     if split_at < 0:
         raise ValueError('split_at must be non-negative')
     if split_at >= n_examples:
@@ -201,11 +196,7 @@ def get_cross_validation_datasets(dataset, n_fold, order=None):
         list of tuples: List of dataset splits.
 
     """
-    if order is None:
-        order = numpy.arange(len(dataset))
-    else:
-        order = numpy.array(order)  # copy
-
+    order = numpy.arange(len(dataset)) if order is None else numpy.array(order)
     whole_size = len(dataset)
     borders = [whole_size * i // n_fold for i in six.moves.range(n_fold + 1)]
     test_sizes = [borders[i + 1] - borders[i] for i in six.moves.range(n_fold)]

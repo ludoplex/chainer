@@ -51,6 +51,4 @@ def cast(x, typ):
         dtype('float16')
 
     """
-    if x.dtype == typ:
-        return chainer.as_variable(x)
-    return Cast(typ).apply((x,))[0]
+    return chainer.as_variable(x) if x.dtype == typ else Cast(typ).apply((x,))[0]

@@ -13,7 +13,7 @@ def _sum_sqnorm(arr):
             x = x.ravel()
             s = x.dot(x)
             sq_sum[int(dev)] += s
-    return sum([float(i) for i in six.itervalues(sq_sum)])
+    return sum(float(i) for i in six.itervalues(sq_sum))
 
 
 class GradientClipping(object):

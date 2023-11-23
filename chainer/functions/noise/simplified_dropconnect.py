@@ -8,9 +8,7 @@ from chainer import variable
 
 
 def _as_mat(x):
-    if x.ndim == 2:
-        return x
-    return x.reshape(len(x), -1)
+    return x if x.ndim == 2 else x.reshape(len(x), -1)
 
 
 def _matmul(a, b, xp):
@@ -33,7 +31,7 @@ class SimplifiedDropconnect(function_node.FunctionNode):
 
     def check_type_forward(self, in_types):
         n_in = in_types.size()
-        type_check.expect(2 <= n_in, n_in <= 3)
+        type_check.expect(n_in >= 2, n_in <= 3)
         x_type, w_type = in_types[:2]
 
         type_check.expect(

@@ -17,10 +17,7 @@ from chainer.utils import argument
 try:
     _get_time = time.perf_counter
 except AttributeError:
-    if os.name == 'nt':
-        _get_time = time.clock
-    else:
-        _get_time = time.time
+    _get_time = time.clock if os.name == 'nt' else time.time
 
 
 class _ExtensionEntry(object):
@@ -216,12 +213,12 @@ class Trainer(object):
 
         if name is None:
             name = getattr(extension, 'name', None)
-            if name is None:
-                name = getattr(extension, 'default_name', None)
-                if name is None:
-                    name = getattr(extension, '__name__', None)
-                    if name is None:
-                        raise TypeError('name is not given for the extension')
+        if name is None:
+            name = getattr(extension, 'default_name', None)
+        if name is None:
+            name = getattr(extension, '__name__', None)
+        if name is None:
+            raise TypeError('name is not given for the extension')
         if name == 'training':
             raise ValueError(
                 'the name "training" is prohibited as an extension name')
@@ -258,7 +255,7 @@ class Trainer(object):
         if name in extensions:
             return extensions[name].extension
         else:
-            raise ValueError('extension %s not found' % name)
+            raise ValueError(f'extension {name} not found')
 
     def run(self, show_loop_exception_msg=True):
         """Executes the training loop.
@@ -288,8 +285,7 @@ class Trainer(object):
 
         # invoke initializer of each extension
         for _, entry in extensions:
-            initializer = getattr(entry.extension, 'initialize', None)
-            if initializer:
+            if initializer := getattr(entry.extension, 'initialize', None):
                 initializer(self)
 
         update = self.updater.update
@@ -310,7 +306,7 @@ class Trainer(object):
                 # Show the exception here, as it will appear as if chainer
                 # hanged in case any finalize method below deadlocks.
                 f = sys.stderr
-                f.write('Exception in main training loop: {}\n'.format(e))
+                f.write(f'Exception in main training loop: {e}\n')
                 f.write('Traceback (most recent call last):\n')
                 traceback.print_tb(sys.exc_info()[2])
                 f.write('Will finalize trainer extensions and updater before '
@@ -318,8 +314,7 @@ class Trainer(object):
             six.reraise(*sys.exc_info())
         finally:
             for _, entry in extensions:
-                finalize = getattr(entry.extension, 'finalize', None)
-                if finalize:
+                if finalize := getattr(entry.extension, 'finalize', None):
                     finalize()
             self.updater.finalize()
 

@@ -73,8 +73,10 @@ class MicroAverage(extension.Extension):
 
     def __call__(self, trainer):
         observation = trainer.observation
-        if not (self._numerator_key in observation and
-                self._denominator_key in observation):
+        if (
+            self._numerator_key not in observation
+            or self._denominator_key not in observation
+        ):
             return
 
         self._numerator += observation[self._numerator_key]

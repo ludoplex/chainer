@@ -31,7 +31,7 @@ class EmbedIDFunction(function_node.FunctionNode):
 
         xp = cuda.get_array_module(*inputs)
         if chainer.is_debug():
-            valid_x = xp.logical_and(0 <= x, x < len(W))
+            valid_x = xp.logical_and(x >= 0, x < len(W))
             if self.ignore_label is not None:
                 valid_x = xp.logical_or(valid_x, x == self.ignore_label)
             if not valid_x.all():
@@ -69,29 +69,27 @@ class EmbedIDGrad(function_node.FunctionNode):
             # too slow.
             for ix, igy in six.moves.zip(x.ravel(),
                                          gy.reshape(x.size, -1)):
-                if ix == self.ignore_label:
-                    continue
-                gW[ix] += igy
+                if ix != self.ignore_label:
+                    gW[ix] += igy
+        elif self.ignore_label is None:
+            cuda.elementwise(
+                'T gy, S x, S n_out', 'raw T gW',
+                'ptrdiff_t w_ind[] = {x, i % n_out};'
+                'atomicAdd(&gW[w_ind], gy)',
+                'embed_id_bwd')(
+                    gy, xp.expand_dims(x, -1), gW.shape[1], gW)
         else:
-            if self.ignore_label is None:
-                cuda.elementwise(
-                    'T gy, S x, S n_out', 'raw T gW',
-                    'ptrdiff_t w_ind[] = {x, i % n_out};'
-                    'atomicAdd(&gW[w_ind], gy)',
-                    'embed_id_bwd')(
-                        gy, xp.expand_dims(x, -1), gW.shape[1], gW)
-            else:
-                cuda.elementwise(
-                    'T gy, S x, S n_out, S ignore', 'raw T gW',
-                    '''
+            cuda.elementwise(
+                'T gy, S x, S n_out, S ignore', 'raw T gW',
+                '''
                     if (x != ignore) {
                       ptrdiff_t w_ind[] = {x, i % n_out};
                       atomicAdd(&gW[w_ind], gy);
                     }
                     ''',
-                    'embed_id_bwd_ignore_label')(
-                        gy, xp.expand_dims(x, -1), gW.shape[1],
-                        self.ignore_label, gW)
+                'embed_id_bwd_ignore_label')(
+                    gy, xp.expand_dims(x, -1), gW.shape[1],
+                    self.ignore_label, gW)
         return gW,
 
     def backward(self, indexes, grads):

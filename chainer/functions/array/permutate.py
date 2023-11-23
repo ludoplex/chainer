@@ -15,11 +15,11 @@ def _check_indices(indices):
     for i in indices:
         if 0 <= i < len(indices):
             continue
-        raise ValueError('Out of bounds index: {}'.format(i))
+        raise ValueError(f'Out of bounds index: {i}')
     sort = numpy.sort(indices)
     for s, t in six.moves.zip(sort, sort[1:]):
         if s == t:
-            raise ValueError('indices contains duplicate value: {}'.format(s))
+            raise ValueError(f'indices contains duplicate value: {s}')
 
 
 def _inverse_indices(indices):

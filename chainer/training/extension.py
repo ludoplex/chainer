@@ -63,8 +63,7 @@ class Extension(object):
             raise AttributeError(
                 'invoke_before_training has been removed since Chainer '
                 'v2.0.0. Use Extension.initialize instead.')
-        raise AttributeError('{} object has no attribute {}'.format(
-            type(self).__name__, name))
+        raise AttributeError(f'{type(self).__name__} object has no attribute {name}')
 
     def finalize(self):
         """Finalizes the extension.

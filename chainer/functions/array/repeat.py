@@ -23,7 +23,7 @@ class Repeat(function_node.FunctionNode):
         else:
             raise TypeError('repeats must be int or tuple of ints')
 
-        if not all(x >= 0 for x in self.repeats):
+        if any(x < 0 for x in self.repeats):
             raise ValueError('all elements in repeats must be zero or larger')
 
         if axis is not None and (
@@ -87,8 +87,8 @@ class RepeatGrad(function_node.FunctionNode):
                 gx = gy.reshape(shape).sum(axis=axis + 1)
             return gx,
 
+        pos = 0
         if axis is None:
-            pos = 0
             gx = xp.zeros(int(numpy.prod(shape)), dtype)
             for (i, r) in enumerate(repeats):
                 gx[i] = xp.sum(gy[pos:pos + r])
@@ -96,7 +96,6 @@ class RepeatGrad(function_node.FunctionNode):
             gx = gx.reshape(shape)
         else:
             gx = xp.zeros(shape, dtype)
-            pos = 0
             src = [slice(None)] * axis + [None]
             dst = [slice(None)] * axis + [None]
             for (i, r) in enumerate(repeats):

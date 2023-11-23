@@ -84,15 +84,7 @@ class PReLUFunctionGrad(function_node.FunctionNode):
         mask = self.cond >= 0
         masked = numpy.where(mask, 0, x * gy)
 
-        if self.reduce_axes is None:
-            # Reached from backward() of PReLUFunctionGrad i.e. this class, to
-            # compute higher order derivatives
-            gW = masked
-        else:
-            # Reached from backward() of PReLUFunction, to compute first
-            # derivatives
-            gW = masked.sum(axis=self.reduce_axes)
-
+        gW = masked if self.reduce_axes is None else masked.sum(axis=self.reduce_axes)
         if numpy.isscalar(gW):
             gW = numpy.array(gW)
 

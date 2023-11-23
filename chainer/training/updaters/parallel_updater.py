@@ -105,11 +105,10 @@ class ParallelUpdater(standard_updater.StandardUpdater):
         # Split the batch to sub-batches.
         #
         n = len(self._models)
-        in_arrays_list = {}
-        for i, key in enumerate(six.iterkeys(self._models)):
-            in_arrays_list[key] = self.converter(
-                batch[i::n], self._devices[key])
-
+        in_arrays_list = {
+            key: self.converter(batch[i::n], self._devices[key])
+            for i, key in enumerate(six.iterkeys(self._models))
+        }
         # For reducing memory
         for model in six.itervalues(self._models):
             model.cleargrads()

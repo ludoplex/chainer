@@ -45,8 +45,8 @@ class Hyperparameter(object):
     def __repr__(self):
         d = self.get_dict()
         keys = sorted(d.keys())
-        values_repr = ', '.join('%s=%s' % (k, d[k]) for k in keys)
-        return 'Hyperparameter(%s)' % values_repr
+        values_repr = ', '.join(f'{k}={d[k]}' for k in keys)
+        return f'Hyperparameter({values_repr})'
 
     @property
     def parent(self):
@@ -152,11 +152,11 @@ class UpdateRule(object):
 
         if name is None:
             name = getattr(hook, 'name', getattr(hook, '__name__', None))
-            if name is None:
-                raise ValueError(
-                    'the name of the hook function is not specified')
+        if name is None:
+            raise ValueError(
+                'the name of the hook function is not specified')
         if name in self._pre_update_hooks or name in self._post_update_hooks:
-            raise ValueError('hook "{}" already exists'.format(name))
+            raise ValueError(f'hook "{name}" already exists')
 
         if timing == 'pre':
             self._pre_update_hooks[name] = hook
@@ -315,10 +315,7 @@ class UpdateRule(object):
                     continue
                 value_device = cuda.get_device_from_array(value)
                 if value_device.id != device.id:
-                    if device.id >= 0:
-                        state[name] = cuda.to_gpu(value)
-                    else:
-                        state[name] = cuda.to_cpu(value)
+                    state[name] = cuda.to_gpu(value) if device.id >= 0 else cuda.to_cpu(value)
 
     def use_fp32_update(self, flag=True):
         """Enables use of parameter update in fp32.
@@ -488,7 +485,7 @@ class Optimizer(object):
         if name is None:
             name = hook.name
         if name in self._pre_update_hooks or name in self._post_update_hooks:
-            raise KeyError('hook "{}" already exists'.format(name))
+            raise KeyError(f'hook "{name}" already exists')
 
         if timing == 'pre':
             self._pre_update_hooks[name] = hook
@@ -511,10 +508,7 @@ class Optimizer(object):
         """Invokes hook functions in registration order."""
         if timing not in ('pre', 'post'):
             raise ValueError("timing must be either 'pre' or 'post'")
-        if timing == 'pre':
-            hooks = self._pre_update_hooks
-        else:
-            hooks = self._post_update_hooks
+        hooks = self._pre_update_hooks if timing == 'pre' else self._post_update_hooks
         for hook in six.itervalues(hooks):
             self._call_hook(hook)
 
@@ -612,10 +606,7 @@ class GradientMethod(Optimizer):
         """Invokes hook functions in registration order."""
         if timing not in ('pre', 'post'):
             raise ValueError("timing must be either 'pre' or 'post'")
-        if timing == 'pre':
-            hooks = self._pre_update_hooks
-        else:
-            hooks = self._post_update_hooks
+        hooks = self._pre_update_hooks if timing == 'pre' else self._post_update_hooks
         for hook in six.itervalues(hooks):
             self._call_hook(hook)
             self.reallocate_cleared_grads()
@@ -717,12 +708,10 @@ class HyperparameterProxy(object):
 
     def __init__(self, attr_name):
         self._attr_name = attr_name
-        self.__doc__ = 'Alias to ``self.hyperparam.{}``'.format(attr_name)
+        self.__doc__ = f'Alias to ``self.hyperparam.{attr_name}``'
 
     def __get__(self, obj, type=None):
-        if obj is None:
-            return self
-        return getattr(obj.hyperparam, self._attr_name)
+        return self if obj is None else getattr(obj.hyperparam, self._attr_name)
 
     def __set__(self, obj, value):
         setattr(obj.hyperparam, self._attr_name, value)

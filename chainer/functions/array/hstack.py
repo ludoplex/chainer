@@ -35,10 +35,7 @@ class Hstack(function_node.FunctionNode):
         gy, = grad_outputs
         ndim = len(self.inputs[0].shape)
         if len(self.inputs) == 1:
-            if ndim == 0:
-                return gy.reshape(()),
-            return gy,
-
+            return (gy.reshape(()), ) if ndim == 0 else (gy, )
         if ndim == 0:
             gx = chainer.functions.split_axis(gy, len(self.inputs), 0)
             return [g.reshape(()) for g in gx]

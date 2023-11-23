@@ -18,10 +18,10 @@ class Tile(function_node.FunctionNode):
             self.reps = reps
         else:
             msg = 'reps must be int or tuple of ints. \n' \
-                  'Actual: {0}'.format(type(reps))
+                      'Actual: {0}'.format(type(reps))
             raise TypeError(msg)
 
-        if not all(x >= 0 for x in self.reps):
+        if any(x < 0 for x in self.reps):
             raise ValueError('All elements in reps must be zero or larger')
 
     def check_type_forward(self, in_types):
@@ -48,8 +48,7 @@ class Tile(function_node.FunctionNode):
         # Reshape so that base axis and reps axis can be distinguished.
         new_shape = []
         for i in range(gy.ndim):
-            new_shape.append(reps[i])
-            new_shape.append(shape[i])
+            new_shape.extend((reps[i], shape[i]))
         new_shape = tuple(new_shape)
 
         # Sum along reps axis
@@ -57,10 +56,7 @@ class Tile(function_node.FunctionNode):
         gy = gy.reshape(new_shape)
         gy = chainer.functions.sum(gy, axis=reps_axis)
 
-        if ndim < len(reps):
-            return gy.reshape(self._in_shape),
-        else:
-            return gy,
+        return (gy.reshape(self._in_shape), ) if ndim < len(reps) else (gy, )
 
 
 def tile(x, reps):

@@ -24,7 +24,7 @@ class IntervalTrigger(object):
 
     def __init__(self, period, unit):
         self.period = period
-        assert unit == 'epoch' or unit == 'iteration'
+        assert unit in ['epoch', 'iteration']
         self.unit = unit
 
         self._previous_iteration = 0

@@ -32,11 +32,11 @@ class MaxPoolingNDKernelForward(pooling_nd_kernel.PoolingNDKernelForward):
         #       argmax_1 = x_1;
         #     }
         w = conv_nd_kernel.Writer()
-        w.write('T v = in[{}];'.format(offset))
+        w.write(f'T v = in[{offset}];')
         w.write('if (maxval < v) {', 'inc')
         w.write('maxval = v;')
         for argmax, x in six.moves.zip(self.argmaxs, xs):
-            w.write('{} = {};'.format(argmax, x))
+            w.write(f'{argmax} = {x};')
         w.write('}', 'dec')
         return w.get()
 
