@@ -142,9 +142,7 @@ class MultiprocessIterator(iterator.Iterator):
 
     @property
     def previous_epoch_detail(self):
-        if self._previous_epoch_detail < 0:
-            return None
-        return self._previous_epoch_detail
+        return None if self._previous_epoch_detail < 0 else self._previous_epoch_detail
 
     def serialize(self, serializer):
         self.current_position = serializer('current_position',
@@ -376,10 +374,7 @@ class _PrefetchLoop(object):
 
         new_pos = pos + self.batch_size
         if new_pos < n:
-            if order is None:
-                indices = numpy.arange(pos, new_pos)
-            else:
-                indices = order[pos:new_pos]
+            indices = numpy.arange(pos, new_pos) if order is None else order[pos:new_pos]
             is_new_epoch = False
         else:
             new_pos = new_pos - n if self.repeat else 0
@@ -388,13 +383,13 @@ class _PrefetchLoop(object):
                 indices = numpy.arange(pos, n)
                 if self.repeat:
                     indices = \
-                        numpy.concatenate((indices, numpy.arange(new_pos)))
+                            numpy.concatenate((indices, numpy.arange(new_pos)))
             else:
                 indices = order[pos:n]
                 if self.repeat:
                     order = self._random.permutation(n)
                     indices = \
-                        numpy.concatenate((indices, order[:new_pos]))
+                            numpy.concatenate((indices, order[:new_pos]))
             epoch += 1
             is_new_epoch = True
 
@@ -448,8 +443,8 @@ class _PackedNdarray(object):
         total = self.offset + self.nbytes
         if total > len(mem):
             raise ValueError(
-                'Shared memory size is too small. expect:{}, actual:{}'.format(
-                    total, len(mem)))
+                f'Shared memory size is too small. expect:{total}, actual:{len(mem)}'
+            )
         target = numpy.frombuffer(mem, self.dtype, self.size, self.offset)
         target[...] = array.ravel()
 
@@ -505,11 +500,16 @@ def _pack(data, mem, offset, limit):
     if over:
         expect = _measure(data)
         warnings.warn(
-            'Shared memory size is too small.\n' +
-            'Please set shared_mem option for MultiprocessIterator.\n' +
-            'Expect shared memory size: {} bytes.\n'.format(expect) +
-            'Actual shared memory size: {} bytes.'.format(limit - offset),
-            UserWarning)
+            (
+                (
+                    'Shared memory size is too small.\n'
+                    + 'Please set shared_mem option for MultiprocessIterator.\n'
+                    + f'Expect shared memory size: {expect} bytes.\n'
+                )
+                + f'Actual shared memory size: {limit - offset} bytes.'
+            ),
+            UserWarning,
+        )
     return data
 
 

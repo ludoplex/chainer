@@ -12,7 +12,7 @@ class LinearFunction(function_node.FunctionNode):
 
     def check_type_forward(self, in_types):
         n_in = in_types.size()
-        type_check.expect(2 <= n_in, n_in <= 3)
+        type_check.expect(n_in >= 2, n_in <= 3)
         x_type, w_type = in_types[:2]
 
         type_check.expect(
@@ -46,9 +46,12 @@ class LinearFunction(function_node.FunctionNode):
         # NumPy raises an error when the array is not contiguous.
         # See: https://github.com/chainer/chainer/issues/2744
         # TODO(niboshi): Remove this code when NumPy is fixed.
-        if (isinstance(x, numpy.ndarray) and
-                not (x.flags.c_contiguous or x.flags.f_contiguous) and
-                1 in x.shape):
+        if (
+            isinstance(x, numpy.ndarray)
+            and not x.flags.c_contiguous
+            and not x.flags.f_contiguous
+            and 1 in x.shape
+        ):
             x = numpy.ascontiguousarray(x)
 
         y = x.dot(W.T).astype(x.dtype, copy=False)
@@ -104,9 +107,12 @@ class LinearGradData(function_node.FunctionNode):
         self.retain_inputs((0, 1))
         W, gy = inputs
 
-        if (isinstance(gy, numpy.ndarray) and
-                not (gy.flags.c_contiguous or gy.flags.f_contiguous) and
-                1 in gy.shape):
+        if (
+            isinstance(gy, numpy.ndarray)
+            and not gy.flags.c_contiguous
+            and not gy.flags.f_contiguous
+            and 1 in gy.shape
+        ):
             gy = numpy.ascontiguousarray(gy)
 
         gx = gy.dot(W).astype(gy.dtype, copy=False)
@@ -154,9 +160,12 @@ class LinearGradWeight(function_node.FunctionNode):
         self.retain_inputs((0, 1))
         x, gy = inputs
 
-        if (isinstance(gy, numpy.ndarray) and
-                not (gy.flags.c_contiguous or gy.flags.f_contiguous) and
-                1 in gy.shape):
+        if (
+            isinstance(gy, numpy.ndarray)
+            and not gy.flags.c_contiguous
+            and not gy.flags.f_contiguous
+            and 1 in gy.shape
+        ):
             gy = numpy.ascontiguousarray(gy)
 
         gW = gy.T.dot(x).astype(self._w_dtype, copy=False)
@@ -235,11 +244,7 @@ def linear(x, W, b=None, n_batch_axes=1):
         x = x.reshape(batch_size, -1)
     elif x.ndim > 2:
         x = x.reshape(x.shape[0], -1)
-    if b is None:
-        args = x, W
-    else:
-        args = x, W, b
-
+    args = (x, W) if b is None else (x, W, b)
     y, = LinearFunction().apply(args)
     if n_batch_axes > 1:
         y = y.reshape(batch_shape + (-1,))

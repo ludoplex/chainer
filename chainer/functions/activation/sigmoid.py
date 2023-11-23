@@ -44,10 +44,7 @@ class Sigmoid(function_node.FunctionNode):
         return y,
 
     def backward(self, indexes, grad_outputs):
-        if self._use_cudnn:
-            x = self.get_retained_inputs()[0].data
-        else:
-            x = None
+        x = self.get_retained_inputs()[0].data if self._use_cudnn else None
         y = self.get_retained_outputs()[0]
         gy, = grad_outputs
         return SigmoidGrad((x,)).apply((y, gy))

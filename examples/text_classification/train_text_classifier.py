@@ -14,7 +14,7 @@ import text_datasets
 
 
 def main():
-    current_datetime = '{}'.format(datetime.datetime.today())
+    current_datetime = f'{datetime.datetime.now()}'
     parser = argparse.ArgumentParser(
         description='Chainer example: Text Classification')
     parser.add_argument('--batchsize', '-b', type=int, default=64,
@@ -57,23 +57,23 @@ def main():
         train, test, vocab = text_datasets.get_other_text_dataset(
             args.dataset, char_based=args.char_based)
 
-    print('# train data: {}'.format(len(train)))
-    print('# test  data: {}'.format(len(test)))
-    print('# vocab: {}'.format(len(vocab)))
-    n_class = len(set([int(d[1]) for d in train]))
-    print('# class: {}'.format(n_class))
+    print(f'# train data: {len(train)}')
+    print(f'# test  data: {len(test)}')
+    print(f'# vocab: {len(vocab)}')
+    n_class = len({int(d[1]) for d in train})
+    print(f'# class: {n_class}')
 
     train_iter = chainer.iterators.SerialIterator(train, args.batchsize)
     test_iter = chainer.iterators.SerialIterator(test, args.batchsize,
                                                  repeat=False, shuffle=False)
 
     # Setup a model
-    if args.model == 'rnn':
-        Encoder = nets.RNNEncoder
+    if args.model == 'bow':
+        Encoder = nets.BOWMLPEncoder
     elif args.model == 'cnn':
         Encoder = nets.CNNEncoder
-    elif args.model == 'bow':
-        Encoder = nets.BOWMLPEncoder
+    elif args.model == 'rnn':
+        Encoder = nets.RNNEncoder
     encoder = Encoder(n_layers=args.layer, n_vocab=len(vocab),
                       n_units=args.unit, dropout=args.dropout)
     model = nets.TextClassifier(encoder, n_class)

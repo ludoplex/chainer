@@ -51,10 +51,7 @@ def gaussian_kl_divergence(mean, ln_var, reduce='sum'):
     var = exponential.exp(ln_var)
     mean_square = mean * mean
     loss = (mean_square + var - ln_var - 1) * 0.5
-    if reduce == 'sum':
-        return sum.sum(loss)
-    else:
-        return loss
+    return sum.sum(loss) if reduce == 'sum' else loss
 
 
 def bernoulli_nll(x, y, reduce='sum'):
@@ -105,10 +102,7 @@ def bernoulli_nll(x, y, reduce='sum'):
             'given' % reduce)
 
     loss = softplus.softplus(y) - x * y
-    if reduce == 'sum':
-        return sum.sum(loss)
-    else:
-        return loss
+    return sum.sum(loss) if reduce == 'sum' else loss
 
 
 def gaussian_nll(x, mean, ln_var, reduce='sum'):
@@ -161,7 +155,4 @@ def gaussian_nll(x, mean, ln_var, reduce='sum'):
     x_diff = x - mean
     x_power = (x_diff * x_diff) * x_prec * -0.5
     loss = (ln_var + math.log(2 * math.pi)) / 2 - x_power
-    if reduce == 'sum':
-        return sum.sum(loss)
-    else:
-        return loss
+    return sum.sum(loss) if reduce == 'sum' else loss

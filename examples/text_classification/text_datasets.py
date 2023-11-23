@@ -22,13 +22,12 @@ URL_OTHER_BASE = 'https://raw.githubusercontent.com/harvardnlp/sent-conv-torch/m
 
 def download_dbpedia():
     path = chainer.dataset.cached_download(URL_DBPEDIA)
-    tf = tarfile.open(path, 'r')
-    return tf
+    return tarfile.open(path, 'r')
 
 
 def read_dbpedia(tf, split, shrink=1, char_based=False):
     dataset = []
-    f = tf.extractfile('dbpedia_csv/{}.csv'.format(split))
+    f = tf.extractfile(f'dbpedia_csv/{split}.csv')
     for i, (label, title, text) in enumerate(csv.reader(f)):
         if i % shrink != 0:
             continue
@@ -117,7 +116,7 @@ def get_imdb(vocab=None, shrink=1, fine_grained=False,
 
 def download_other_dataset(name):
     if name in ['custrev', 'mpqa', 'rt-polarity', 'subj']:
-        files = [name + '.all']
+        files = [f'{name}.all']
     elif name == 'TREC':
         files = [name + suff for suff in ['.train.all', '.test.all']]
     else:
@@ -134,7 +133,7 @@ def read_other_dataset(path, shrink=1, char_based=False):
     dataset = []
     with io.open(path, encoding='utf-8', errors='ignore') as f:
         for i, l in enumerate(f):
-            if i % shrink != 0 or not len(l.strip()) >= 3:
+            if i % shrink != 0 or len(l.strip()) < 3:
                 continue
             label, text = l.strip().split(None, 1)
             label = int(label)

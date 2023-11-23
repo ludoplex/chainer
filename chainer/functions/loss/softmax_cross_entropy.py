@@ -40,9 +40,7 @@ def _check_input_values(x, t, ignore_label):
     if isinstance(x, variable.Variable):
         x = x.data
 
-    if not (((0 <= t) &
-             (t < x.shape[1])) |
-            (t == ignore_label)).all():
+    if not ((t >= 0) & (t < x.shape[1]) | (t == ignore_label)).all():
         msg = ('Each label `t` need to satisfy '
                '`0 <= t < x.shape[1] or t == %d`' % ignore_label)
         raise ValueError(msg)
@@ -94,19 +92,15 @@ class SoftmaxCrossEntropy(function.Function):
         log_p = log_yd[numpy.maximum(t.ravel(), 0), numpy.arange(t.size)]
 
         log_p *= (t.ravel() != self.ignore_label)
-        if self.reduce == 'mean':
+        if self.reduce != 'mean':
+            return -log_p.reshape(t.shape),
             # deal with the case where the SoftmaxCrossEntropy is
             # unpickled from the old version
-            if self.normalize:
-                count = (t != self.ignore_label).sum()
-            else:
-                count = len(x)
-            self._coeff = 1.0 / max(count, 1)
+        count = (t != self.ignore_label).sum() if self.normalize else len(x)
+        self._coeff = 1.0 / max(count, 1)
 
-            y = log_p.sum(keepdims=True) * (-self._coeff)
-            return y.reshape(()),
-        else:
-            return -log_p.reshape(t.shape),
+        y = log_p.sum(keepdims=True) * (-self._coeff)
+        return y.reshape(()),
 
     def forward_gpu(self, inputs):
         cupy = cuda.cupy
@@ -118,10 +112,7 @@ class SoftmaxCrossEntropy(function.Function):
             y = cupy.zeros(t.shape, dtype=x.dtype)
             if self.cache_score:
                 self.y = y
-            if self.reduce == 'mean':
-                return y.sum(),
-            else:
-                return y,
+            return (y.sum(), ) if self.reduce == 'mean' else (y, )
         log_y = log_softmax._log_softmax(x)
         if self.cache_score:
             self.y = cupy.exp(log_y)
@@ -215,11 +206,7 @@ class SoftmaxCrossEntropy(function.Function):
             cupy.exp(y, out=y)
         gloss = grad_outputs[0]
         n_unit = t.size // len(t)
-        if self.reduce == 'mean':
-            coeff = gloss * self._coeff
-        else:
-            coeff = gloss[:, None, ...]
-
+        coeff = gloss * self._coeff if self.reduce == 'mean' else gloss[:, None, ...]
         if self.class_weight is None:
             gx = cuda.elementwise(
                 'T y, S t, T coeff, S n_channel, S n_unit, S ignore_label',
@@ -278,16 +265,12 @@ def _double_backward_softmax_cross_entropy(x, t, normalize, class_weight,
 
     loss = loss * in_use
 
-    if reduce == 'mean':
-        if normalize:
-            count = in_use.sum()
-        else:
-            count = len(x)
-        count = max(count, 1.)
-        loss = loss / count
-        return chainer.functions.sum(loss)
-    else:
+    if reduce != 'mean':
         return loss
+    count = in_use.sum() if normalize else len(x)
+    count = max(count, 1.)
+    loss = loss / count
+    return chainer.functions.sum(loss)
 
 
 def softmax_cross_entropy(

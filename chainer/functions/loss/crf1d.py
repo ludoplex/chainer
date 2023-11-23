@@ -101,16 +101,16 @@ def crf1d(cost, xs, ys, reduce='mean'):
     """
     if reduce not in ('mean', 'no'):
         raise ValueError(
-            "only 'mean' and 'no' are valid for 'reduce', but '%s' is "
-            'given' % reduce)
+            f"only 'mean' and 'no' are valid for 'reduce', but '{reduce}' is given"
+        )
 
     assert xs[0].shape[1] == cost.shape[0]
 
     n_label = cost.shape[0]
     n_batch = xs[0].shape[0]
 
-    alpha = xs[0]
     alphas = []
+    alpha = xs[0]
     for x in xs[1:]:
         batch = x.shape[0]
         if alpha.shape[0] > batch:
@@ -119,7 +119,7 @@ def crf1d(cost, xs, ys, reduce='mean'):
         b_alpha, b_cost = broadcast.broadcast(alpha[..., None], cost)
         alpha = logsumexp.logsumexp(b_alpha + b_cost, axis=1) + x
 
-    if len(alphas) > 0:
+    if alphas:
         alphas.append(alpha)
         alpha = concat.concat(alphas[::-1], axis=0)
 
@@ -137,15 +137,12 @@ def crf1d(cost, xs, ys, reduce='mean'):
         score += (select_item.select_item(x, y) + reshape.reshape(
             embed_id.embed_id(y_prev * n_label + y, cost), (batch,)))
 
-    if len(scores) > 0:
+    if scores:
         scores.append(score)
         score = concat.concat(scores[::-1], axis=0)
 
     loss = logz - score
-    if reduce == 'mean':
-        return _sum.sum(loss) / n_batch
-    else:
-        return loss
+    return _sum.sum(loss) / n_batch if reduce == 'mean' else loss
 
 
 def argmax_crf1d(cost, xs):

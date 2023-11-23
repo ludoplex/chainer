@@ -32,9 +32,9 @@ def main():
                         help='Metric to watch for early stopping')
     args = parser.parse_args()
 
-    print('GPU: {}'.format(args.gpu))
-    print('# Minibatch-size: {}'.format(args.batchsize))
-    print('# epoch: {}'.format(args.epoch))
+    print(f'GPU: {args.gpu}')
+    print(f'# Minibatch-size: {args.batchsize}')
+    print(f'# epoch: {args.epoch}')
     print('')
 
     # Set up a neural network to train.

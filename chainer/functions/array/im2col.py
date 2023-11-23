@@ -9,9 +9,7 @@ from chainer.utils import type_check
 
 
 def _pair(x):
-    if hasattr(x, '__getitem__'):
-        return x
-    return x, x
+    return x if hasattr(x, '__getitem__') else (x, x)
 
 
 def _col2im(x, *args, **kwargs):

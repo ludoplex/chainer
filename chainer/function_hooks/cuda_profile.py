@@ -12,13 +12,13 @@ class CUDAProfileHook(function_hook.FunctionHook):
             raise RuntimeError('nvtx is required for CUDAProfileHook')
 
     def forward_preprocess(self, function, in_data):
-        cuda.cupy.cuda.nvtx.RangePush(function.label + '.forward')
+        cuda.cupy.cuda.nvtx.RangePush(f'{function.label}.forward')
 
     def forward_postprocess(self, function, in_data):
         cuda.cupy.cuda.nvtx.RangePop()
 
     def backward_preprocess(self, function, in_data, out_grad):
-        cuda.cupy.cuda.nvtx.RangePush(function.label + '.backward')
+        cuda.cupy.cuda.nvtx.RangePush(f'{function.label}.backward')
 
     def backward_postprocess(self, function, in_data, out_grad):
         cuda.cupy.cuda.nvtx.RangePop()

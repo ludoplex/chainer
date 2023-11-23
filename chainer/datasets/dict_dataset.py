@@ -22,8 +22,7 @@ class DictDataset(object):
             if length is None:
                 length = len(dataset)
             elif length != len(dataset):
-                raise ValueError(
-                    'dataset length conflicts at "{}"'.format(key))
+                raise ValueError(f'dataset length conflicts at "{key}"')
         self._datasets = datasets
         self._length = length
 

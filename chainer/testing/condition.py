@@ -32,7 +32,7 @@ def repeat_with_success_at_least(times, min_success):
     def _repeat_with_success_at_least(f):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
-            assert len(args) > 0
+            assert args
             instance = args[0]
             assert isinstance(instance, unittest.TestCase)
             success_counter = 0
@@ -42,7 +42,7 @@ def repeat_with_success_at_least(times, min_success):
             def fail():
                 msg = '\nFail: {0}, Success: {1}'.format(
                     failure_counter, success_counter)
-                if len(results) > 0:
+                if results:
                     first = results[0]
                     errs = first.failures + first.errors
                     if len(errs) > 0:
@@ -74,7 +74,9 @@ def repeat_with_success_at_least(times, min_success):
                     fail()
                     return
             fail()
+
         return wrapper
+
     return _repeat_with_success_at_least
 
 

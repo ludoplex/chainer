@@ -30,7 +30,7 @@ class Normal(initializer.Initializer):
         args = {'loc': 0.0, 'scale': self.scale, 'size': array.shape}
         if xp is not numpy:
             # Only CuPy supports dtype option
-            if self.dtype == numpy.float32 or self.dtype == numpy.float16:
+            if self.dtype in [numpy.float32, numpy.float16]:
                 # float16 is not supported in cuRAND
                 args['dtype'] = numpy.float32
         array[...] = xp.random.normal(**args)

@@ -101,10 +101,7 @@ def numerical_grad(
     grads = [xp.zeros(x.shape, numpy.float64) for x in inputs]
 
     if detect_nondifferentiable:
-        if center_outputs is None:
-            ys0 = _copy_arrays(f())
-        else:
-            ys0 = center_outputs
+        ys0 = _copy_arrays(f()) if center_outputs is None else center_outputs
         nout = len(ys0)
         shapes = [_.shape for _ in ys0]
         sizes = numpy.array([_.size for _ in ys0])
@@ -513,7 +510,7 @@ def check_backward(
     # input dimension should be taken into account, but we ignore the
     # differences and assume that the curvature is uniform with respect to all
     # the input dimentions.
-    norm = math.sqrt(sum([xp.square(d).sum() for d in directions]))
+    norm = math.sqrt(sum(xp.square(d).sum() for d in directions))
     if norm != 0:
         # norm could be zero if input arrays are 0-sized.
         scale = 1. / norm
@@ -681,21 +678,19 @@ class _GradientSetter(FunctionNode):
 
 
 def _set_y_grad(y, y_grad):
-    if y_grad is not None:
-        if len(y) != len(y_grad):
-            raise ValueError(
-                'Upstream gradients must contain equally many elements as '
-                'number of output elements.\n'
-                'Actual: {} != {}'.format(len(y), len(y_grad)))
-        y, = _GradientSetter(y_grad).apply(y)
-    else:
+    if y_grad is None:
         if len(y) != 1:
             raise ValueError(
-                'Function must return a zero-dimensional array of length 1 '
-                'if the upstream gradient is `None`.\n'
-                'Actual: {} != 1'.format(len(y)))
+                f'Function must return a zero-dimensional array of length 1 if the upstream gradient is `None`.\nActual: {len(y)} != 1'
+            )
         y, = _GradientSetter(None).apply(y)
         y_grad = (1,)
+    elif len(y) != len(y_grad):
+        raise ValueError(
+            f'Upstream gradients must contain equally many elements as number of output elements.\nActual: {len(y)} != {len(y_grad)}'
+        )
+    else:
+        y, = _GradientSetter(y_grad).apply(y)
     return y, y_grad
 
 

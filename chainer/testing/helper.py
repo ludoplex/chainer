@@ -13,8 +13,7 @@ except ImportError as e:
 
 def _check_mock_available():
     if _mock_error is not None:
-        raise RuntimeError(
-            'mock is not available: Reason: {}'.format(_mock_error))
+        raise RuntimeError(f'mock is not available: Reason: {_mock_error}')
 
 
 def with_requires(*requirements):
@@ -42,7 +41,7 @@ def with_requires(*requirements):
     except pkg_resources.ResolutionError:
         skip = True
 
-    msg = 'requires: {}'.format(','.join(requirements))
+    msg = f"requires: {','.join(requirements)}"
     return unittest.skipIf(skip, msg)
 
 
@@ -52,28 +51,25 @@ def assert_warns(expected):
         warnings.simplefilter('always')
         yield
 
-    # Python 2 does not raise warnings multiple times from the same stack
-    # frame.
-    if sys.version_info >= (3, 0):
-        if not any(isinstance(m.message, expected) for m in w):
+    if not any(isinstance(m.message, expected) for m in w):
+        if sys.version_info >= (3, 0):
             try:
                 exc_name = expected.__name__
             except AttributeError:
                 exc_name = str(expected)
 
-            raise AssertionError('%s not triggerred' % exc_name)
+            raise AssertionError(f'{exc_name} not triggerred')
 
 
 def _import_object_from_name(fullname):
     comps = fullname.split('.')
     obj = sys.modules.get(comps[0])
     if obj is None:
-        raise RuntimeError('Can\'t import {}'.format(comps[0]))
+        raise RuntimeError(f"Can\'t import {comps[0]}")
     for i, comp in enumerate(comps[1:]):
         obj = getattr(obj, comp)
         if obj is None:
-            raise RuntimeError(
-                'Can\'t find object {}'.format('.'.join(comps[:i + 1])))
+            raise RuntimeError(f"Can\'t find object {'.'.join(comps[:i + 1])}")
     return obj
 
 

@@ -124,27 +124,31 @@ def concat_examples(batch, device=None, padding=None):
     first_elem = batch[0]
 
     if isinstance(first_elem, tuple):
-        result = []
         if not isinstance(padding, tuple):
             padding = [padding] * len(first_elem)
 
-        for i in six.moves.range(len(first_elem)):
-            result.append(to_device(device, _concat_arrays(
-                [example[i] for example in batch], padding[i])))
-
+        result = [
+            to_device(
+                device,
+                _concat_arrays([example[i] for example in batch], padding[i]),
+            )
+            for i in six.moves.range(len(first_elem))
+        ]
         return tuple(result)
 
     elif isinstance(first_elem, dict):
-        result = {}
         if not isinstance(padding, dict):
             padding = {key: padding for key in first_elem}
 
-        for key in first_elem:
-            result[key] = to_device(device, _concat_arrays(
-                [example[key] for example in batch], padding[key]))
-
-        return result
-
+        return {
+            key: to_device(
+                device,
+                _concat_arrays(
+                    [example[key] for example in batch], padding[key]
+                ),
+            )
+            for key in first_elem
+        }
     else:
         return to_device(device, _concat_arrays(batch, padding))
 
@@ -240,7 +244,6 @@ class ConcatWithAsyncTransfer(object):
 
         with cuda.get_device_from_id(device):
             if isinstance(first_elem, tuple):
-                result = []
                 if not isinstance(padding, tuple):
                     padding = [padding] * len(first_elem)
 
@@ -248,13 +251,10 @@ class ConcatWithAsyncTransfer(object):
                     self._conveyor[i].put(_concat_arrays(
                         [example[i] for example in batch], padding[i]))
 
-                for i in six.moves.range(len(first_elem)):
-                    result.append(self._conveyor[i].get())
-
+                result = [self._conveyor[i].get() for i in six.moves.range(len(first_elem))]
                 return tuple(result)
 
             elif isinstance(first_elem, dict):
-                result = {}
                 if not isinstance(padding, dict):
                     padding = {key: padding for key in first_elem}
 
@@ -262,11 +262,7 @@ class ConcatWithAsyncTransfer(object):
                     self._conveyor[key].put(_concat_arrays(
                         [example[key] for example in batch], padding[key]))
 
-                for key in first_elem:
-                    result[key] = self._conveyor[key].get()
-
-                return result
-
+                return {key: self._conveyor[key].get() for key in first_elem}
             else:
                 return to_device(device, _concat_arrays(batch, padding))
 

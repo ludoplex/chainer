@@ -140,9 +140,7 @@ class LabeledImageDataset(dataset_mixin.DatasetMixin):
                 for i, line in enumerate(pairs_file):
                     pair = line.strip().split()
                     if len(pair) != 2:
-                        raise ValueError(
-                            'invalid format at line {} in file {}'.format(
-                                i, pairs_path))
+                        raise ValueError(f'invalid format at line {i} in file {pairs_path}')
                     pairs.append((pair[0], int(pair[1])))
         self._pairs = pairs
         self._root = root

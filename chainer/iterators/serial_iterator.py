@@ -87,9 +87,7 @@ class SerialIterator(iterator.Iterator):
 
     @property
     def previous_epoch_detail(self):
-        if self._previous_epoch_detail < 0:
-            return None
-        return self._previous_epoch_detail
+        return None if self._previous_epoch_detail < 0 else self._previous_epoch_detail
 
     def serialize(self, serializer):
         self.current_position = serializer('current_position',

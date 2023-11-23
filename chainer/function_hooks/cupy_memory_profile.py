@@ -51,7 +51,7 @@ class CupyMemoryProfileHook(function_hook.FunctionHook):
     def __init__(self):
         cuda.check_cuda_available()
         if not memory_hook_available:
-            msg = 'CuPy >= 2.0 is required. %s' % str(_resolution_error)
+            msg = f'CuPy >= 2.0 is required. {str(_resolution_error)}'
             raise RuntimeError(msg)
         self.call_history = []
         self._memory_hook = CupyMemoryCumulativeHook()
@@ -141,11 +141,12 @@ class CupyMemoryProfileHook(function_hook.FunctionHook):
             occurrence = str(record['occurrence'])
             entries.append(
                 [function_name, used_bytes, acquired_bytes, occurrence])
-        entry_widths = []
-        entry_widths.append(max(len(f) for f, _, _, _ in entries))
-        entry_widths.append(max(len(u) for _, u, _, _ in entries))
-        entry_widths.append(max(len(a) for _, _, a, _ in entries))
-        entry_widths.append(max(len(o) for _, _, _, o in entries))
+        entry_widths = [
+            max((len(f) for f, _, _, _ in entries)),
+            max((len(u) for _, u, _, _ in entries)),
+            max((len(a) for _, _, a, _ in entries)),
+            max((len(o) for _, _, _, o in entries)),
+        ]
         template = '  '.join('{:>%d}' % w for w in entry_widths)
         for function_name, used_bytes, acquired_bytes, occurrence in entries:
             line = template.format(

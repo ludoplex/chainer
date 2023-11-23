@@ -35,6 +35,4 @@ def gumbel_softmax(log_pi, tau=0.1, axis=1):
         return variable.Variable(xp.ones((), log_pi.dtype))
     dtype = log_pi.dtype
     g = xp.random.gumbel(size=log_pi.shape).astype(dtype)
-    y = chainer.functions.softmax((log_pi + g) / tau, axis=axis)
-
-    return y
+    return chainer.functions.softmax((log_pi + g) / tau, axis=axis)

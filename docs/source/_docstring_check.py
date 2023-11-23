@@ -29,12 +29,11 @@ class DocstringCheckContext(object):
     def error(self, msg, include_line=True, include_source=True):
         lines = self.lines
         iline = self.iline - 1
-        msg = ('{}\n\n'
-               'on {}'.format(msg, self.name))
+        msg = f'{msg}\n\non {self.name}'
 
         if include_line and 0 <= iline < len(lines):
             line = lines[iline]
-            msg += '\n' + 'at line {}: "{}"\n'.format(iline, line)
+            msg += '\n' + f'at line {iline}: "{line}"\n'
 
         if include_source:
             msg += '\n'

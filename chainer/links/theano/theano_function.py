@@ -87,8 +87,7 @@ Please install theano to activate theano function.
         # theano.sandbox.cuda.basic_ops.gpu_from_host
         self.forward_func = theano.function(inputs=inputs, outputs=outputs)
 
-        gs = tuple(
-            o.type('g_{}'.format(i)) for i, o in enumerate(outputs))
+        gs = tuple(o.type(f'g_{i}') for i, o in enumerate(outputs))
         known_grads = collections.OrderedDict(zip(outputs, gs))
         grad = theano.tensor.grad(
             cost=None, wrt=inputs, known_grads=known_grads,

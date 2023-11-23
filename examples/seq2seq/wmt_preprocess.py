@@ -22,13 +22,12 @@ def split_sentence(s, use_lower):
     words = []
     for word in s.strip().split():
         words.extend(split_pattern.split(word))
-    words = [w for w in words if w]
-    return words
+    return [w for w in words if w]
 
 
 def count_lines(path):
     with io.open(path, encoding='utf-8', errors='ignore') as f:
-        return sum([1 for _ in f])
+        return sum(1 for _ in f)
 
 
 def read_file(path, use_lower):
@@ -36,8 +35,7 @@ def read_file(path, use_lower):
     bar = progressbar.ProgressBar()
     with io.open(path, encoding='utf-8', errors='ignore') as f:
         for line in bar(f, max_value=n_lines):
-            words = split_sentence(line, use_lower)
-            yield words
+            yield split_sentence(line, use_lower)
 
 
 def proc_dataset(

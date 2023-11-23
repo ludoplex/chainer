@@ -298,21 +298,16 @@ def n_step_gru_base(n_layers, dropout_ratio, hx, ws, bs, xs,
         w = n_step_rnn.cudnn_rnn_weight_concat(
             n_layers, states, use_bi_direction, 'gru', ws, bs)
 
-        if use_bi_direction:
-            rnn = NStepBiGRU
-        else:
-            rnn = NStepGRU
-
+        rnn = NStepBiGRU if use_bi_direction else NStepGRU
         hy, ys = rnn(n_layers, states, lengths)(hx, w, xs)
         sections = numpy.cumsum(lengths[:-1])
         ys = chainer.functions.split_axis(ys, sections, 0)
-        return hy, ys
-
     else:
         hy, _, ys = n_step_rnn.n_step_rnn_impl(
             _gru, n_layers, dropout_ratio, hx, None, ws, bs, xs,
             use_bi_direction)
-        return hy, ys
+
+    return hy, ys
 
 
 def _gru(x, h, c, w, b):

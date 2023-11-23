@@ -35,10 +35,7 @@ class HuberLoss(function_node.FunctionNode):
         mask = y > (self.delta ** 2)
         y -= mask * xp.square(abs(diff) - self.delta)
         y *= 0.5
-        if self.reduce == 'sum_along_second_axis':
-            return y.sum(axis=1),
-        else:
-            return y,
+        return (y.sum(axis=1), ) if self.reduce == 'sum_along_second_axis' else (y, )
 
     def backward(self, indexes, grad_outputs):
         x0, x1 = self.get_retained_inputs()

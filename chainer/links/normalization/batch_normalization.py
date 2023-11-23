@@ -148,16 +148,23 @@ class BatchNormalization(link.Link):
             else:
                 decay = self.decay
 
-            ret = functions.batch_normalization(
-                x, gamma, beta, eps=self.eps, running_mean=self.avg_mean,
-                running_var=self.avg_var, decay=decay, axis=self.axis)
+            return functions.batch_normalization(
+                x,
+                gamma,
+                beta,
+                eps=self.eps,
+                running_mean=self.avg_mean,
+                running_var=self.avg_var,
+                decay=decay,
+                axis=self.axis,
+            )
         else:
             # Use running average statistics or fine-tuned statistics.
             mean = variable.Variable(self.avg_mean)
             var = variable.Variable(self.avg_var)
-            ret = functions.fixed_batch_normalization(
-                x, gamma, beta, mean, var, self.eps, axis=self.axis)
-        return ret
+            return functions.fixed_batch_normalization(
+                x, gamma, beta, mean, var, self.eps, axis=self.axis
+            )
 
     def start_finetuning(self):
         """Resets the population count for collecting population statistics.

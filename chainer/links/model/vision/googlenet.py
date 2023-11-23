@@ -219,7 +219,7 @@ class GoogLeNet(link.Chain):
         inception_4d_cache = None
         target_layers = set(layers)
         for key, funcs in self.functions.items():
-            if len(target_layers) == 0:
+            if not target_layers:
                 break
 
             if key == 'loss1_fc2':
@@ -368,20 +368,20 @@ def prepare(image, size=(224, 224)):
 
 def _transfer_inception(src, dst, names):
     for name in names:
-        chain = getattr(dst, 'inc{}'.format(name))
-        src_prefix = 'inception_{}/'.format(name)
-        chain.conv1.W.data[:] = src[src_prefix + '1x1'].W.data
-        chain.conv1.b.data[:] = src[src_prefix + '1x1'].b.data
-        chain.proj3.W.data[:] = src[src_prefix + '3x3_reduce'].W.data
-        chain.proj3.b.data[:] = src[src_prefix + '3x3_reduce'].b.data
-        chain.conv3.W.data[:] = src[src_prefix + '3x3'].W.data
-        chain.conv3.b.data[:] = src[src_prefix + '3x3'].b.data
-        chain.proj5.W.data[:] = src[src_prefix + '5x5_reduce'].W.data
-        chain.proj5.b.data[:] = src[src_prefix + '5x5_reduce'].b.data
-        chain.conv5.W.data[:] = src[src_prefix + '5x5'].W.data
-        chain.conv5.b.data[:] = src[src_prefix + '5x5'].b.data
-        chain.projp.W.data[:] = src[src_prefix + 'pool_proj'].W.data
-        chain.projp.b.data[:] = src[src_prefix + 'pool_proj'].b.data
+        chain = getattr(dst, f'inc{name}')
+        src_prefix = f'inception_{name}/'
+        chain.conv1.W.data[:] = src[f'{src_prefix}1x1'].W.data
+        chain.conv1.b.data[:] = src[f'{src_prefix}1x1'].b.data
+        chain.proj3.W.data[:] = src[f'{src_prefix}3x3_reduce'].W.data
+        chain.proj3.b.data[:] = src[f'{src_prefix}3x3_reduce'].b.data
+        chain.conv3.W.data[:] = src[f'{src_prefix}3x3'].W.data
+        chain.conv3.b.data[:] = src[f'{src_prefix}3x3'].b.data
+        chain.proj5.W.data[:] = src[f'{src_prefix}5x5_reduce'].W.data
+        chain.proj5.b.data[:] = src[f'{src_prefix}5x5_reduce'].b.data
+        chain.conv5.W.data[:] = src[f'{src_prefix}5x5'].W.data
+        chain.conv5.b.data[:] = src[f'{src_prefix}5x5'].b.data
+        chain.projp.W.data[:] = src[f'{src_prefix}pool_proj'].W.data
+        chain.projp.b.data[:] = src[f'{src_prefix}pool_proj'].b.data
 
 
 def _transfer_googlenet(src, dst):

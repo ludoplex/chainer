@@ -19,5 +19,5 @@ class FailOnNonNumber(extension.Extension):
             for param in target.params():
                 if not xp.isfinite(param.array).all():
                     raise RuntimeError(
-                        'Kill the process since parameters in optimizer'
-                        ' \'{}\' diverge. R.I.P.'.format(name))
+                        f"Kill the process since parameters in optimizer \'{name}\' diverge. R.I.P."
+                    )

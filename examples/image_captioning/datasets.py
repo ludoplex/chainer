@@ -60,7 +60,7 @@ class MsCocoDataset(dataset.DatasetMixin):
             img = np.asarray(img, np.float32)
             img = np.broadcast_to(img, (3,) + img.shape)
         else:
-            raise ValueError('Invalid image mode {}'.format(img.mode))
+            raise ValueError(f'Invalid image mode {img.mode}')
 
         # Load the caption, i.e. sequence of tokens
         tokens = [self.vocab.get(w, _unk) for w in

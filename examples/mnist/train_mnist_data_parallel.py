@@ -30,10 +30,10 @@ def main():
                         help='Number of units')
     args = parser.parse_args()
 
-    print('GPU: {}, {}'.format(args.gpu0, args.gpu1))
-    print('# unit: {}'.format(args.unit))
-    print('# Minibatch-size: {}'.format(args.batchsize))
-    print('# epoch: {}'.format(args.epoch))
+    print(f'GPU: {args.gpu0}, {args.gpu1}')
+    print(f'# unit: {args.unit}')
+    print(f'# Minibatch-size: {args.batchsize}')
+    print(f'# epoch: {args.epoch}')
     print('')
 
     chainer.backends.cuda.get_device_from_id(args.gpu0).use()

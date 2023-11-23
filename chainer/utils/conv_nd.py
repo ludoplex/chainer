@@ -16,7 +16,7 @@ def as_tuple(x, n):
 
 
 def im2col_nd_cpu(img, ksize, stride, pad, pval=0, cover_all=False):
-    n, c = img.shape[0:2]       # (n, c, d_1, d_2, ..., d_N)
+    n, c = img.shape[:2]
     dims = img.shape[2:]
     ndim = len(dims)
     assert ndim == len(ksize) == len(stride) == len(pad)
@@ -51,7 +51,7 @@ def im2col_nd_cpu(img, ksize, stride, pad, pval=0, cover_all=False):
 
 
 def im2col_nd_gpu(img, ksize, stride, pad, cover_all=False):
-    n, c = img.shape[0:2]       # (n, c, d_1, d_2, ..., d_N)
+    n, c = img.shape[:2]
     dims = img.shape[2:]
     ndim = len(dims)
     assert ndim == len(ksize) == len(stride) == len(pad)

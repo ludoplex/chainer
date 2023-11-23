@@ -14,17 +14,14 @@ class GetItem(function_node.FunctionNode):
 
     def __init__(self, slices):
         if isinstance(slices, list):
-            if all([isinstance(s, int) for s in slices]):
+            if all(isinstance(s, int) for s in slices):
                 slices = slices,
             slices = tuple(slices)
         elif not isinstance(slices, tuple):
             slices = slices,
 
         if chainer.is_debug():
-            n_ellipses = 0
-            for s in slices:
-                if s is Ellipsis:
-                    n_ellipses += 1
+            n_ellipses = sum(1 for s in slices if s is Ellipsis)
             if n_ellipses > 1:
                 raise ValueError('Only one Ellipsis is allowed')
 

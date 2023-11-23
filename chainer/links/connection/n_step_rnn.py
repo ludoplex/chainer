@@ -65,13 +65,9 @@ class NStepRNNBase(link.ChainList):
         argument.assert_kwargs_empty(kwargs)
 
         weights = []
-        if self.use_bi_direction:
-            direction = 2
-        else:
-            direction = 1
-
+        direction = 2 if self.use_bi_direction else 1
         for i in six.moves.range(n_layers):
-            for di in six.moves.range(direction):
+            for _ in six.moves.range(direction):
                 weight = link.Link()
                 with weight.init_scope():
                     for j in six.moves.range(self.n_weights):

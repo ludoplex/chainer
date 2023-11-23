@@ -29,8 +29,7 @@ def bow_encode(embed, sentences):
     """
 
     e = embed(sentences)
-    s = F.sum(e, axis=-2)
-    return s
+    return F.sum(e, axis=-2)
 
 
 def position_encode(embed, sentences):
@@ -67,8 +66,7 @@ def position_encode(embed, sentences):
     i = xp.arange(1, n_words + 1, dtype=numpy.float32)[:, None]
     coeff = (1 - i / length) - k * (1 - 2.0 * i / length)
     e = coeff * e
-    s = F.sum(e, axis=-2)
-    return s
+    return F.sum(e, axis=-2)
 
 
 def make_encoder(name):
@@ -77,7 +75,7 @@ def make_encoder(name):
     elif name == 'pe':
         return position_encode
     else:
-        raise ValueError('Unknonw encoder type: "%s"' % name)
+        raise ValueError(f'Unknonw encoder type: "{name}"')
 
 
 class Memory(object):
@@ -168,13 +166,11 @@ class MemNN(chainer.Chain):
         u = self.encoder(self.B, question)
         for memory in self.memories:
             u = memory.query(u)
-        a = self.W(u)
-        return a
+        return self.W(u)
 
     def __call__(self, sentences, question):
         self.register_all(sentences)
-        a = self.query(question)
-        return a
+        return self.query(question)
 
 
 def convert_data(train_data, max_memory):
@@ -193,7 +189,7 @@ def convert_data(train_data, max_memory):
                 i += 1
             elif isinstance(sent, babi.Query):
                 query = numpy.zeros(sentence_len, dtype=numpy.int32)
-                query[0:len(sent.sentence)] = sent.sentence
+                query[:len(sent.sentence)] = sent.sentence
                 all_data.append({
                     'sentences': mem.copy(),
                     'question': query,
@@ -218,7 +214,7 @@ def save_model(directory, model, vocab):
     elif encoder == position_encode:
         sentence_repr = 'pe'
     else:
-        raise ValueError('Cannot serialize encoder: %s' % str(encoder))
+        raise ValueError(f'Cannot serialize encoder: {str(encoder)}')
 
     os.makedirs(directory, exist_ok=True)
     parameters = {

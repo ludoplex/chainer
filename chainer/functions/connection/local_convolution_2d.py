@@ -8,9 +8,7 @@ from chainer import variable
 
 
 def _pair(x):
-    if hasattr(x, '__getitem__'):
-        return x
-    return x, x
+    return x if hasattr(x, '__getitem__') else (x, x)
 
 
 class LocalConvolution2DFunction(function_node.FunctionNode):
@@ -20,7 +18,7 @@ class LocalConvolution2DFunction(function_node.FunctionNode):
 
     def check_type_forward(self, in_types):
         n_in = in_types.size()
-        type_check.expect(2 <= n_in, n_in <= 3)
+        type_check.expect(n_in >= 2, n_in <= 3)
         x_type, w_type = in_types[:2]
 
         type_check.expect(
@@ -181,9 +179,6 @@ def local_convolution_2d(x, W, b=None, stride=1):
 
     """
     fnode = LocalConvolution2DFunction(stride)
-    if b is None:
-        args = (x, W)
-    else:
-        args = (x, W, b)
+    args = (x, W) if b is None else (x, W, b)
     y, = fnode.apply(args)
     return y

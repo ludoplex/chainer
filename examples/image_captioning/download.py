@@ -24,11 +24,10 @@ if __name__ == '__main__':
     try:
         os.makedirs(args.out)
     except OSError:
-        raise OSError(
-            "'{}' already exists, delete it and try again".format(args.out))
+        raise OSError(f"'{args.out}' already exists, delete it and try again")
 
     for url in urls:
-        print('Downloading {}...'.format(url))
+        print(f'Downloading {url}...')
 
         # Download the zip file
         file_name = os.path.basename(url)
@@ -39,7 +38,7 @@ if __name__ == '__main__':
         zf = zipfile.ZipFile(dst_file_path)
         for name in zf.namelist():
             dirname, filename = os.path.split(name)
-            if not filename == '':
+            if filename != '':
                 zf.extract(name, args.out)
 
         # Remove the zip file since it has been extracted

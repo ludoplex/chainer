@@ -4,10 +4,7 @@ from chainer.utils import type_check
 
 
 def _count_unknown_dims(shape):
-    cnt = 0
-    for dim in shape:
-        cnt += dim < 0
-    return cnt
+    return sum(dim < 0 for dim in shape)
 
 
 class Reshape(function_node.FunctionNode):

@@ -28,13 +28,10 @@ __version__ = pkg_resources.get_distribution('chainer').version
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 rtd_version = os.environ.get('READTHEDOCS_VERSION')
-if rtd_version == 'latest':
-    tag = 'master'
-else:
-    tag = 'v{}'.format(__version__)
+tag = 'master' if rtd_version == 'latest' else f'v{__version__}'
 extlinks = {
-    'blob': ('https://github.com/chainer/chainer/blob/{}/%s'.format(tag), ''),
-    'tree': ('https://github.com/chainer/chainer/tree/{}/%s'.format(tag), ''),
+    'blob': (f'https://github.com/chainer/chainer/blob/{tag}/%s', ''),
+    'tree': (f'https://github.com/chainer/chainer/tree/{tag}/%s', ''),
 }
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -407,8 +404,9 @@ def _find_source_root(source_abs_path):
 
             dir_ = os.path.dirname(dir)
             if len(dir_) == len(dir):
-                raise RuntimeError('Couldn\'t parse root directory from '
-                                   'source file: {}'.format(source_abs_path))
+                raise RuntimeError(
+                    f"Couldn\'t parse root directory from source file: {source_abs_path}"
+                )
             dir = dir_
     return _source_root
 
@@ -463,5 +461,4 @@ def linkcode_resolve(domain, info):
     filename = os.path.realpath(filename)
     relpath = _get_source_relative_path(filename)
 
-    return 'https://github.com/chainer/chainer/blob/{}/{}#L{}'.format(
-        tag, relpath, linenum)
+    return f'https://github.com/chainer/chainer/blob/{tag}/{relpath}#L{linenum}'

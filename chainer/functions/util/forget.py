@@ -14,14 +14,12 @@ def _call_func(func, xs):
             n = i + 1
             suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(
                 n if n < 20 else n % 10, 'th')
-            msg = ('{}{} element of a returned tuple is not Variable, '
-                   'but is {}').format(n, suffix, type(out))
+            msg = f'{n}{suffix} element of a returned tuple is not Variable, but is {type(out)}'
             raise RuntimeError(msg)
     elif isinstance(outs, variable.Variable):
         outs = (outs,)
     else:
-        msg = ('A tuple of Variables or a Variable are expected, but {} '
-               'is returned.'.format(type(outs)))
+        msg = f'A tuple of Variables or a Variable are expected, but {type(outs)} is returned.'
         raise RuntimeError(msg)
 
     return outs

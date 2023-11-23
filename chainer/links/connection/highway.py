@@ -71,5 +71,4 @@ class Highway(link.Chain):
         """
         out_plain = self.activate(self.plain(x))
         out_transform = sigmoid.sigmoid(self.transform(x))
-        y = out_plain * out_transform + x * (1 - out_transform)
-        return y
+        return out_plain * out_transform + x * (1 - out_transform)

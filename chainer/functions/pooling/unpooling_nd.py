@@ -63,10 +63,7 @@ class UnpoolingND(pooling_nd._PoolingND):
         tile_reps = (1, 1) + ksize + (1,) * ndim
         col = xp.tile(x[0][tile_index], tile_reps)
 
-        if xp is numpy:
-            col2im_nd = conv_nd.col2im_nd_cpu
-        else:
-            col2im_nd = conv_nd.col2im_nd_gpu
+        col2im_nd = conv_nd.col2im_nd_cpu if xp is numpy else conv_nd.col2im_nd_gpu
         y = col2im_nd(col, stride, pad, self.outs)
 
         return y,
@@ -87,10 +84,7 @@ class UnpoolingNDGrad(function_node.FunctionNode):
 
     def forward(self, gy):
         xp = cuda.get_array_module(*gy)
-        if xp is numpy:
-            im2col_nd = conv_nd.im2col_nd_cpu
-        else:
-            im2col_nd = conv_nd.im2col_nd_gpu
+        im2col_nd = conv_nd.im2col_nd_cpu if xp is numpy else conv_nd.im2col_nd_gpu
         gcol = im2col_nd(
             gy[0], self.ksize, self.stride, self.pad, cover_all=self.cover_all)
         gcol_axis = tuple(six.moves.range(2, 2 + self.ndim))

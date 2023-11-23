@@ -133,19 +133,19 @@ class MultiprocessParallelUpdater(standard_updater.StandardUpdater):
         optim = optimizer.__class__.__name__
         if optim in ('Adam', 'AdaGrad', 'RMSprop'):
             optimizer.eps *= len(devices)
-            warnings.warn('optimizer.eps is changed to {} '
-                          'by MultiprocessParallelUpdater for new batch size.'.
-                          format(optimizer.eps))
+            warnings.warn(
+                f'optimizer.eps is changed to {optimizer.eps} by MultiprocessParallelUpdater for new batch size.'
+            )
         elif optim in ('RMSpropGraves', 'AdaDelta'):
             optimizer.eps *= len(devices) ** 2  # not quite right for AdaDelta
-            warnings.warn('optimizer.eps is changed to {} '
-                          'by MultiprocessParallelUpdater for new batch size.'.
-                          format(optimizer.eps))
+            warnings.warn(
+                f'optimizer.eps is changed to {optimizer.eps} by MultiprocessParallelUpdater for new batch size.'
+            )
         elif hasattr(optimizer, 'lr'):
             optimizer.lr /= len(devices)
-            warnings.warn('optimizer.lr is changed to {} '
-                          'by MultiprocessParallelUpdater for new batch size.'.
-                          format(optimizer.lr))
+            warnings.warn(
+                f'optimizer.lr is changed to {optimizer.lr} by MultiprocessParallelUpdater for new batch size.'
+            )
 
         super(MultiprocessParallelUpdater, self).__init__(
             iterator=iterators[0],
@@ -457,6 +457,6 @@ def _get_nccl_data_type(dtype):
     elif dtype == numpy.float64:
         nccl_data_type = nccl.NCCL_DOUBLE
     else:
-        raise RuntimeError('Unexpected data type:{}'.format(dtype))
+        raise RuntimeError(f'Unexpected data type:{dtype}')
 
     return nccl_data_type

@@ -26,8 +26,8 @@ class PoolingNDKernelForward(object):
 
     @classmethod
     @cuda.memoize()
-    def generate(klass, ndim):
-        return klass()._generate(ndim)
+    def generate(cls, ndim):
+        return cls()._generate(ndim)
 
     def _generate(self, ndim):
         self.ndim = ndim
@@ -40,7 +40,7 @@ class PoolingNDKernelForward(object):
         in_params = self._in_params()
         out_params = self._out_params()
         operation = self._operation()
-        name = '{}_pool_{}d_fwd'.format(self.name(), self.ndim)
+        name = f'{self.name()}_pool_{self.ndim}d_fwd'
         return in_params, out_params, operation, name
 
     def _in_params(self):
@@ -66,7 +66,7 @@ class PoolingNDKernelForward(object):
 
     def _compile_c0(self):
         # 2D: int c0 = i / (out_0 * out_1);
-        return ['int c0 = i / ({});'.format(conv_nd_kernel.mulexp(self.outs))]
+        return [f'int c0 = i / ({conv_nd_kernel.mulexp(self.outs)});']
 
     def _compile_out_x(self):
         # 2D: int out_x_0 = i / (out_1) % out_0;
@@ -175,8 +175,8 @@ class PoolingNDKernelBackward(object):
 
     @classmethod
     @cuda.memoize()
-    def generate(klass, ndim):
-        return klass()._generate(ndim)
+    def generate(cls, ndim):
+        return cls()._generate(ndim)
 
     def _generate(self, ndim):
         self.ndim = ndim
@@ -189,7 +189,7 @@ class PoolingNDKernelBackward(object):
         in_params = self._in_params()
         out_params = self._out_params()
         operation = self._operation()
-        name = '{}_pool_{}d_bwd'.format(self.name(), self.ndim)
+        name = f'{self.name()}_pool_{self.ndim}d_bwd'
         return in_params, out_params, operation, name
 
     def _in_params(self):
@@ -215,7 +215,7 @@ class PoolingNDKernelBackward(object):
 
     def _compile_c0(self):
         # 2D: int c0  = i / (d_0 * d_1);
-        return ['int c0  = i / ({});'.format(conv_nd_kernel.mulexp(self.ds))]
+        return [f'int c0  = i / ({conv_nd_kernel.mulexp(self.ds)});']
 
     def _compile_x(self):
         # 2D: int x_0 = i / (d_1) % d_0 + p_0;

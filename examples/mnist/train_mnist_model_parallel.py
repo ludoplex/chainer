@@ -41,9 +41,7 @@ class ParallelMLP(chainer.Chain):
         y0 = self.second0(F.relu(h0))
         y1 = self.second1(F.relu(h1))
 
-        # synchronize
-        y = y0 + F.copy(y1, self.gpu0)
-        return y  # output is on gpu0
+        return y0 + F.copy(y1, self.gpu0)
 
 
 def main():
@@ -64,10 +62,10 @@ def main():
                         help='Number of units')
     args = parser.parse_args()
 
-    print('GPU: {}, {}'.format(args.gpu0, args.gpu1))
-    print('# unit: {}'.format(args.unit))
-    print('# Minibatch-size: {}'.format(args.batchsize))
-    print('# epoch: {}'.format(args.epoch))
+    print(f'GPU: {args.gpu0}, {args.gpu1}')
+    print(f'# unit: {args.unit}')
+    print(f'# Minibatch-size: {args.batchsize}')
+    print(f'# epoch: {args.epoch}')
     print('')
 
     # See train_mnist.py for the meaning of these lines

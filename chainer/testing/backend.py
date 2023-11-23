@@ -28,15 +28,12 @@ class BackendConfig(object):
         # Specified values
         for k, v in params.items():
             if not hasattr(self, k):
-                raise ValueError('Parameter {} is not defined'.format(k))
+                raise ValueError(f'Parameter {k} is not defined')
             setattr(self, k, v)
 
     @property
     def xp(self):
-        if self.use_cuda:
-            return cuda.cupy
-        else:
-            return numpy
+        return cuda.cupy if self.use_cuda else numpy
 
     def __enter__(self):
         self._contexts = [
@@ -58,10 +55,8 @@ class BackendConfig(object):
             c.__exit__(typ, value, traceback)
 
     def __repr__(self):
-        lst = []
-        for k, _ in self._props:
-            lst.append('{}={!r}'.format(k, getattr(self, k)))
-        return '<BackendConfig {}>'.format(' '.join(lst))
+        lst = ['{}={!r}'.format(k, getattr(self, k)) for k, _ in self._props]
+        return f"<BackendConfig {' '.join(lst)}>"
 
     def get_func_str(self):
         """Returns a string that can be used in method name"""
@@ -74,7 +69,7 @@ class BackendConfig(object):
                 val = 'false'
             else:
                 val = str(val)
-            lst.append('{}_{}'.format(k, val))
+            lst.append(f'{k}_{val}')
         return '__'.join(lst)
 
     def get_pytest_marks(self):
@@ -83,9 +78,8 @@ class BackendConfig(object):
             marks.append(attr.gpu)
             if self.use_cudnn != 'never':
                 marks.append(attr.cudnn)
-        else:
-            if self.use_ideep != 'never':
-                marks.append(attr.ideep)
+        elif self.use_ideep != 'never':
+            marks.append(attr.ideep)
 
         assert all(callable(_) for _ in marks)
         return marks

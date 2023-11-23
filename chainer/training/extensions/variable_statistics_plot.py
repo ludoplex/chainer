@@ -211,11 +211,10 @@ class VariableStatisticsPlot(extension.Extension):
 
         if not self._plot_percentile:
             n_percentile = 0
+        elif isinstance(percentile_sigmas, (list, tuple)):
+            n_percentile = len(percentile_sigmas)
         else:
-            if not isinstance(percentile_sigmas, (list, tuple)):
-                n_percentile = 1  # scalar, single percentile
-            else:
-                n_percentile = len(percentile_sigmas)
+            n_percentile = 1  # scalar, single percentile
         self._data_shape = (
             len(self._keys), int(plot_mean) + int(plot_std) + n_percentile)
         self._samples = Reservoir(max_sample_size, data_shape=self._data_shape)
@@ -241,7 +240,7 @@ class VariableStatisticsPlot(extension.Extension):
                 x = getattr(var, k, None)
                 if x is not None:
                     xs.append(x.ravel())
-            if len(xs) > 0:
+            if xs:
                 stat_dict = self._statistician(
                     xp.concatenate(xs, axis=0), axis=0, xp=xp)
                 stat_list = []
@@ -263,7 +262,7 @@ class VariableStatisticsPlot(extension.Extension):
 
     def save_plot_using_module(self, file_path, plt):
         nrows = int(self._plot_mean or self._plot_std) \
-            + int(self._plot_percentile)
+                + int(self._plot_percentile)
         ncols = len(self._keys)
 
         fig, axes = plt.subplots(
@@ -290,20 +289,24 @@ class VariableStatisticsPlot(extension.Extension):
             ax = axes[row, col]
             ax.set_title(self._keys[col])  # `data` or `grad`
 
-            if self._plot_mean or self._plot_std:
-                if self._plot_mean and self._plot_std:
+            if self._plot_mean:
+                if self._plot_std:
                     ax.errorbar(
                         idxs, data[:, col, 0], data[:, col, 1],
                         color=_plot_color, ecolor=_plot_color_trans,
                         label='mean, std', marker=self._marker)
                 else:
-                    if self._plot_mean:
-                        label = 'mean'
-                    elif self._plot_std:
-                        label = 'std'
+                    label = 'mean'
                     ax.plot(
                         idxs, data[:, col, 0], color=_plot_color, label=label,
                         marker=self._marker)
+                row += 1
+
+            elif self._plot_std:
+                label = 'std'
+                ax.plot(
+                    idxs, data[:, col, 0], color=_plot_color, label=label,
+                    marker=self._marker)
                 row += 1
 
             if self._plot_percentile:
@@ -318,12 +321,7 @@ class VariableStatisticsPlot(extension.Extension):
                             idxs, data[:, col, offset + i], color=_plot_color,
                             label='percentile', marker=self._marker)
                     else:
-                        if i == n_percentile_mid_floor:
-                            # Last percentiles and the number of all
-                            # percentiles are even
-                            label = 'percentile'
-                        else:
-                            label = '_nolegend_'
+                        label = 'percentile' if i == n_percentile_mid_floor else '_nolegend_'
                         ax.fill_between(
                             idxs,
                             data[:, col, offset + i],

@@ -29,11 +29,10 @@ class DotNode(object):
         self.attribute = {'label': node.label}
         if isinstance(node, variable.VariableNode):
             if show_name and node.name is not None:
-                self.attribute['label'] = '{}: {}'.format(
-                    node.name, self.attribute['label'])
-            self.attribute.update({'shape': 'oval'})
+                self.attribute['label'] = f"{node.name}: {self.attribute['label']}"
+            self.attribute['shape'] = 'oval'
         else:
-            self.attribute.update({'shape': 'box'})
+            self.attribute['shape'] = 'box'
         if attribute is not None:
             self.attribute.update(attribute)
 
@@ -48,7 +47,7 @@ class DotNode(object):
 
         attributes = ["%s=\"%s\"" % (k, v) for (k, v)
                       in self.attribute.items()]
-        return "%s [%s];" % (self.id_, ",".join(attributes))
+        return f'{self.id_} [{",".join(attributes)}];'
 
 
 class ComputationalGraph(object):
@@ -136,9 +135,8 @@ class ComputationalGraph(object):
                 if not self.remove_variable:
                     raise TypeError('head and tail should be the set of '
                                     'VariableNode and Function')
-                else:
-                    head_attr = self.function_style
-                    tail_attr = self.function_style
+                head_attr = self.function_style
+                tail_attr = self.function_style
             head_node = DotNode(head, head_attr, self.show_name)
             tail_node = DotNode(tail, tail_attr, self.show_name)
             edge = (head_node.id_, tail_node.id_)

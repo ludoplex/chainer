@@ -14,18 +14,17 @@ class SexpParser(object):
         assert token != ')'
         self.pos += 1
 
-        if token == '(':
-            children = []
-            while True:
-                assert self.pos < len(self.tokens)
-                if self.tokens[self.pos] == ')':
-                    self.pos += 1
-                    break
-                else:
-                    children.append(self.parse())
-            return children
-        else:
+        if token != '(':
             return token
+        children = []
+        while True:
+            assert self.pos < len(self.tokens)
+            if self.tokens[self.pos] == ')':
+                self.pos += 1
+                break
+            else:
+                children.append(self.parse())
+        return children
 
 
 def read_corpus(path, max_size):

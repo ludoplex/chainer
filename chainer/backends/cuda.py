@@ -156,11 +156,10 @@ def get_device_from_id(device_id):
         device_id (int or None): The ID of the device which this function
             returns.
     """
-    if device_id is not None:
-        check_cuda_available()
-        return Device(device_id)
-    else:
+    if device_id is None:
         return DummyDevice
+    check_cuda_available()
+    return Device(device_id)
 
 
 def get_device_from_array(*arrays):
@@ -182,10 +181,14 @@ def get_device_from_array(*arrays):
             to. If a list of :class:`cupy.ndarray`\\ s are given, it returns
             the first device object of an array in the list.
     """
-    for array in arrays:
-        if isinstance(array, ndarray) and array.device is not None:
-            return array.device
-    return DummyDevice
+    return next(
+        (
+            array.device
+            for array in arrays
+            if isinstance(array, ndarray) and array.device is not None
+        ),
+        DummyDevice,
+    )
 
 
 def get_device(*args):
@@ -268,21 +271,20 @@ def to_gpu(array, device=None, stream=None):
 
     check_cuda_available()
     with _get_device(device) as device_:
-        if isinstance(array, (list, tuple)):
-            d = {}
-            ret = []
-            for arr in array:
-                if arr is None:
-                    ret.append(None)
-                else:
-                    arr2 = d.get(id(arr))
-                    if arr2 is None:
-                        arr2 = _array_to_gpu(arr, device_, stream)
-                        d[id(arr)] = arr2
-                    ret.append(arr2)
-            return type(array)(ret)
-        else:
+        if not isinstance(array, (list, tuple)):
             return _array_to_gpu(array, device_, stream)
+        d = {}
+        ret = []
+        for arr in array:
+            if arr is None:
+                ret.append(None)
+            else:
+                arr2 = d.get(id(arr))
+                if arr2 is None:
+                    arr2 = _array_to_gpu(arr, device_, stream)
+                    d[id(arr)] = arr2
+                ret.append(arr2)
+        return type(array)(ret)
 
 
 def _array_to_gpu(array, device, stream):
@@ -353,21 +355,20 @@ def to_cpu(array, stream=None):
         If input arrays include `None`, it is returned as `None` as is.
 
     """
-    if isinstance(array, (list, tuple)):
-        d = {}
-        ret = []
-        for arr in array:
-            if arr is None:
-                ret.append(None)
-            else:
-                arr2 = d.get(id(arr))
-                if arr2 is None:
-                    arr2 = _array_to_cpu(arr, stream)
-                    d[id(arr)] = arr2
-                ret.append(arr2)
-        return type(array)(ret)
-    else:
+    if not isinstance(array, (list, tuple)):
         return _array_to_cpu(array, stream)
+    d = {}
+    ret = []
+    for arr in array:
+        if arr is None:
+            ret.append(None)
+        else:
+            arr2 = d.get(id(arr))
+            if arr2 is None:
+                arr2 = _array_to_cpu(arr, stream)
+                d[id(arr)] = arr2
+            ret.append(arr2)
+    return type(array)(ret)
 
 
 def _array_to_cpu(array, stream):
@@ -523,12 +524,11 @@ def get_array_module(*args):
         the arguments.
 
     """
-    if available:
-        args = [arg.data if isinstance(arg, chainer.variable.Variable) else arg
-                for arg in args]
-        return cupy.get_array_module(*args)
-    else:
+    if not available:
         return numpy
+    args = [arg.data if isinstance(arg, chainer.variable.Variable) else arg
+            for arg in args]
+    return cupy.get_array_module(*args)
 
 
 def get_max_workspace_size():
@@ -541,9 +541,7 @@ def get_max_workspace_size():
 
     """
     # To avoid error on no cuDNN environment
-    if cudnn_enabled:
-        return cudnn.get_max_workspace_size()
-    return 0
+    return cudnn.get_max_workspace_size() if cudnn_enabled else 0
 
 
 def set_max_workspace_size(size):
@@ -570,10 +568,7 @@ def fuse(*args, **kwargs):
        :func:`cupy.fuse`
 
     """
-    if available:
-        return cupy.fuse(*args, **kwargs)
-    else:
-        return lambda f: f
+    return cupy.fuse(*args, **kwargs) if available else (lambda f: f)
 
 
 # ------------------------------------------------------------------------------
@@ -610,16 +605,15 @@ def should_use_cudnn(level, lowest_version=0):
         return False
 
     if level not in _SHOULD_USE_CUDNN:
-        raise ValueError('invalid cuDNN use level: %s '
-                         '(must be either of "==always" or ">=auto")' %
-                         repr(level))
-    flags = _SHOULD_USE_CUDNN[level]
-
+        raise ValueError(
+            f'invalid cuDNN use level: {repr(level)} (must be either of "==always" or ">=auto")'
+        )
     use_cudnn = config.use_cudnn
+    flags = _SHOULD_USE_CUDNN[level]
     if use_cudnn not in flags:
-        raise ValueError('invalid use_cudnn configuration: %s '
-                         '(must be either of "always", "auto", or "never")' %
-                         repr(use_cudnn))
+        raise ValueError(
+            f'invalid use_cudnn configuration: {repr(use_cudnn)} (must be either of "always", "auto", or "never")'
+        )
     return flags[use_cudnn]
 
 

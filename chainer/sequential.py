@@ -131,12 +131,11 @@ class Sequential(link.ChainList):
 
     def __setitem__(self, i, layer):
         if i >= len(self):
-            raise ValueError(
-                '{} should be less than {}'.format(i, len(self)))
+            raise ValueError(f'{i} should be less than {len(self)}')
         if not callable(layer):
             raise ValueError(
-                'All elements of a Sequential class should be callable. But '
-                'given {} is not callable.'.format(layer))
+                f'All elements of a Sequential class should be callable. But given {layer} is not callable.'
+            )
 
         if self._layers[i] is not layer:
             del self[i]
@@ -162,26 +161,24 @@ class Sequential(link.ChainList):
         return item in self._layers
 
     def __add__(self, other):
-        if isinstance(other, Sequential):
-            ret = Sequential()
-            for layer in self:
-                ret.append(layer)
-            for layer in other:
-                ret.append(layer)
-            return ret
-        else:
-            raise ValueError('add (+) operator supports only objects of '
-                             'Sequential class, but {} is given.'.format(
-                                 str(type(other))))
+        if not isinstance(other, Sequential):
+            raise ValueError(
+                f'add (+) operator supports only objects of Sequential class, but {str(type(other))} is given.'
+            )
+        ret = Sequential()
+        for layer in self:
+            ret.append(layer)
+        for layer in other:
+            ret.append(layer)
+        return ret
 
     def __iadd__(self, other):
-        if isinstance(other, Sequential):
-            for layer in other:
-                self.append(layer)
-        else:
-            raise ValueError('add (+) operator supports only objects of '
-                             'Sequential class, but {} is given.'.format(
-                                 str(type(other))))
+        if not isinstance(other, Sequential):
+            raise ValueError(
+                f'add (+) operator supports only objects of Sequential class, but {str(type(other))} is given.'
+            )
+        for layer in other:
+            self.append(layer)
         return self
 
     def __call__(self, *x):
@@ -205,19 +202,17 @@ class Sequential(link.ChainList):
 
         """
         for layer in self._layers:
-            if isinstance(x, tuple):
-                x = layer(*x)
-            else:
-                x = layer(x)
+            x = layer(*x) if isinstance(x, tuple) else layer(x)
         return x
 
     def __reduce__(self):
-        n_lambda = 0
-        for layer in self._layers:
-            if callable(layer) and hasattr(layer, '__name__') \
-                    and layer.__name__ == '<lambda>':
-                n_lambda += 1
-
+        n_lambda = sum(
+            1
+            for layer in self._layers
+            if callable(layer)
+            and hasattr(layer, '__name__')
+            and layer.__name__ == '<lambda>'
+        )
         if n_lambda > 0:
             raise ValueError(
                 'This Sequential object has at least one lambda function as '
@@ -233,7 +228,7 @@ class Sequential(link.ChainList):
         for i, layer in enumerate(self):
             if isinstance(layer, Sequential):
                 name = layer.__class__.__name__
-                name += '\twhich has {} layers'.format(len(layer))
+                name += f'\twhich has {len(layer)} layers'
             elif isinstance(layer, link.Chain):
                 name = layer.__class__.__name__
                 name += '\tThe structure behind a Chain is determined at '
@@ -247,10 +242,7 @@ class Sequential(link.ChainList):
                 param_info = '\t'
                 for param in sorted(layer.params(), key=lambda p: p.name):
                     param_info += param.name
-                    if param._data[0] is not None:
-                        param_info += str(param._data[0].shape)
-                    else:
-                        param_info += '(None)'
+                    param_info += '(None)' if param._data[0] is None else str(param._data[0].shape)
                     param_info += '\t'
                 name = name + param_info
             elif isinstance(layer, function.Function):
@@ -261,7 +253,7 @@ class Sequential(link.ChainList):
                 name = inspect.getsource(layer).strip()
             else:
                 name = layer.__name__
-            ret += '{}\t{}\n'.format(i, name)
+            ret += f'{i}\t{name}\n'
         return ret
 
     def append(self, layer):
@@ -274,8 +266,8 @@ class Sequential(link.ChainList):
     def insert(self, i, layer):
         if not callable(layer):
             raise ValueError(
-                'All elements of the argment should be callable. But '
-                'given {} is not callable.'.format(layer))
+                f'All elements of the argment should be callable. But given {layer} is not callable.'
+            )
 
         self._layers.insert(i, layer)
         if isinstance(layer, link.Link):
@@ -297,8 +289,7 @@ class Sequential(link.ChainList):
         if layer in self:
             del self[self.index(layer)]
         else:
-            raise ValueError(
-                'There is no layer object that is same as {}'.format(layer))
+            raise ValueError(f'There is no layer object that is same as {layer}')
 
     def remove_by_layer_type(self, type_name):
         """Remove layers by layer type.
@@ -328,9 +319,8 @@ class Sequential(link.ChainList):
                 self.remove(_layer)
 
     def pop(self, i=-1):
-        layer = self._layers[i]
         del self[i]
-        return layer
+        return self._layers[i]
 
     def clear(self):
         # TODO(mitmul): Reduce the computational cost here
@@ -361,15 +351,14 @@ class Sequential(link.ChainList):
 
         """
 
-        num = 0
-        for layer in self._layers:
-            if isinstance(layer, link.Link):
-                if layer.__class__.__name__ == type_name:
-                    num += 1
-            else:
-                if layer.__name__ == type_name:
-                    num += 1
-        return num
+        return sum(
+            1
+            for layer in self._layers
+            if isinstance(layer, link.Link)
+            and layer.__class__.__name__ == type_name
+            or not isinstance(layer, link.Link)
+            and layer.__name__ == type_name
+        )
 
     def copy(self, mode='share'):
         ret = Sequential()

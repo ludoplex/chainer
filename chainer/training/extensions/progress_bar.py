@@ -52,8 +52,6 @@ class ProgressBar(extension.Extension):
                 training_length)
 
         length, unit = training_length
-        out = self._out
-
         iteration = trainer.updater.iteration
 
         # print the progress bar
@@ -64,15 +62,14 @@ class ProgressBar(extension.Extension):
 
             recent_timing.append((iteration, epoch, now))
 
+            out = self._out
+
             if os.name == 'nt':
                 util.erase_console(0, 0)
             else:
                 out.write('\033[J')
 
-            if unit == 'iteration':
-                rate = iteration / length
-            else:
-                rate = epoch / length
+            rate = iteration / length if unit == 'iteration' else epoch / length
             rate = min(rate, 1.0)
 
             bar_length = self._bar_length

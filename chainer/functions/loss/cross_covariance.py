@@ -12,14 +12,14 @@ class CrossCovariance(function_node.FunctionNode):
     """Cross-covariance loss."""
 
     def __init__(self, reduce='half_squared_sum'):
-        self.y_centered = None
         self.z_centered = None
         self.covariance = None
 
+        self.y_centered = None
         if reduce not in ('half_squared_sum', 'no'):
             raise ValueError(
-                "Only 'half_squared_sum' and 'no' are valid "
-                "for 'reduce', but '%s' is given" % reduce)
+                f"Only 'half_squared_sum' and 'no' are valid for 'reduce', but '{reduce}' is given"
+            )
         self.reduce = reduce
 
     def check_type_forward(self, in_types):
@@ -43,13 +43,12 @@ class CrossCovariance(function_node.FunctionNode):
         covariance = y_centered.T.dot(z_centered)
         covariance /= len(y)
 
-        if self.reduce == 'half_squared_sum':
-            xp = cuda.get_array_module(*inputs)
-            cost = xp.vdot(covariance, covariance)
-            cost *= y.dtype.type(0.5)
-            return utils.force_array(cost),
-        else:
+        if self.reduce != 'half_squared_sum':
             return covariance,
+        xp = cuda.get_array_module(*inputs)
+        cost = xp.vdot(covariance, covariance)
+        cost *= y.dtype.type(0.5)
+        return utils.force_array(cost),
 
     def backward(self, indexes, grad_outputs):
         y, z = self.get_retained_inputs()

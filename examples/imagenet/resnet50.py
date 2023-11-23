@@ -70,7 +70,7 @@ class Block(chainer.ChainList):
     def __init__(self, layer, in_size, ch, out_size, stride=2, groups=1):
         super(Block, self).__init__()
         self.add_link(BottleNeckA(in_size, ch, out_size, stride, groups))
-        for i in range(layer - 1):
+        for _ in range(layer - 1):
             self.add_link(BottleNeckB(out_size, ch, groups))
 
     def __call__(self, x):

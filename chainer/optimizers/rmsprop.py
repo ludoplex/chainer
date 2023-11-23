@@ -49,8 +49,8 @@ class RMSpropRule(optimizer.UpdateRule):
         eps = grad.dtype.type(hp.eps)
         if hp.eps != 0 and eps == 0:
             raise ValueError(
-                'eps of RMSprop optimizer is too small for {} ({})'.format(
-                    grad.dtype.name, hp.eps))
+                f'eps of RMSprop optimizer is too small for {grad.dtype.name} ({hp.eps})'
+            )
         ms = self.state['ms']
 
         ms *= hp.alpha
@@ -65,8 +65,8 @@ class RMSpropRule(optimizer.UpdateRule):
         eps = grad.dtype.type(hp.eps)
         if eps == 0:
             raise ValueError(
-                'eps of RMSprop optimizer is too small for {} ({})'.format(
-                    grad.dtype.name, hp.eps))
+                f'eps of RMSprop optimizer is too small for {grad.dtype.name} ({hp.eps})'
+            )
         cuda.elementwise(
             'T grad, T lr, T alpha, T eps',
             'T param, T ms',

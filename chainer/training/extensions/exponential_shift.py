@@ -58,15 +58,13 @@ class ExponentialShift(extension.Extension):
         optimizer = self._get_optimizer(trainer)
         value = self._init * (self._rate ** self._t)
         if self._target is not None:
-            if self._rate > 1:
-                # almost same as value = min(value, self._target), but this
-                # line supports negative values, too
-                if value / self._target > 1:
-                    value = self._target
-            else:
-                # ditto
-                if value / self._target < 1:
-                    value = self._target
+            if (
+                self._rate > 1
+                and value / self._target > 1
+                or self._rate <= 1
+                and value / self._target < 1
+            ):
+                value = self._target
         self._update_value(optimizer, value)
 
     def serialize(self, serializer):

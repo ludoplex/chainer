@@ -56,10 +56,7 @@ class Contrastive(function.Function):
 
         x_dim = x0.shape[1]
         y = xp.repeat(y[:, None], x_dim, axis=1)
-        if self.reduce == 'mean':
-            alpha = gy[0] / y.shape[0]
-        else:
-            alpha = gy[0][:, None]
+        alpha = gy[0] / y.shape[0] if self.reduce == 'mean' else gy[0][:, None]
         dist = xp.repeat(self.dist[:, None], x_dim, axis=1)
         # avoid division by zero
         dist = xp.maximum(dist, 1e-8)

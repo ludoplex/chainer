@@ -422,28 +422,22 @@ def n_step_lstm_base(
 
     xp = cuda.get_array_module(hx, hx.data)
 
-    if xp is not numpy and chainer.should_use_cudnn('>=auto', 5000):
-        states = get_random_state().create_dropout_states(dropout_ratio)
-        lengths = [len(x) for x in xs]
-        xs = chainer.functions.concat(xs, axis=0)
-
-        w = n_step_rnn.cudnn_rnn_weight_concat(
-            n_layers, states, use_bi_direction, 'lstm', ws, bs)
-
-        if use_bi_direction:
-            rnn = NStepBiLSTM
-        else:
-            rnn = NStepLSTM
-
-        hy, cy, ys = rnn(n_layers, states, lengths)(hx, cx, w, xs)
-        sections = numpy.cumsum(lengths[:-1])
-        ys = chainer.functions.split_axis(ys, sections, 0)
-        return hy, cy, ys
-
-    else:
+    if xp is numpy or not chainer.should_use_cudnn('>=auto', 5000):
         return n_step_rnn.n_step_rnn_impl(
             _lstm, n_layers, dropout_ratio, hx, cx, ws, bs, xs,
             use_bi_direction)
+    states = get_random_state().create_dropout_states(dropout_ratio)
+    lengths = [len(x) for x in xs]
+    xs = chainer.functions.concat(xs, axis=0)
+
+    w = n_step_rnn.cudnn_rnn_weight_concat(
+        n_layers, states, use_bi_direction, 'lstm', ws, bs)
+
+    rnn = NStepBiLSTM if use_bi_direction else NStepLSTM
+    hy, cy, ys = rnn(n_layers, states, lengths)(hx, cx, w, xs)
+    sections = numpy.cumsum(lengths[:-1])
+    ys = chainer.functions.split_axis(ys, sections, 0)
+    return hy, cy, ys
 
 
 def _lstm(x, h, c, w, b):

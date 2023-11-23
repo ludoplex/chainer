@@ -8,8 +8,8 @@ import sys
 from setuptools import setup
 
 
-if sys.version_info[:3] == (3, 5, 0):
-    if not int(os.getenv('CHAINER_PYTHON_350_FORCE', '0')):
+if not int(os.getenv('CHAINER_PYTHON_350_FORCE', '0')):
+    if sys.version_info[:3] == (3, 5, 0):
         msg = """
 Chainer does not work with Python 3.5.0.
 
@@ -21,7 +21,7 @@ set CHAINER_PYTHON_350_FORCE environment variable to 1."""
 
 
 def cupy_requirement(pkg):
-    return '{}==5.0.0a1'.format(pkg)
+    return f'{pkg}==5.0.0a1'
 
 
 requirements = {
@@ -114,7 +114,7 @@ cupy_pkg = find_any_distribution([
 if cupy_pkg is not None:
     req = cupy_requirement(cupy_pkg.project_name)
     install_requires.append(req)
-    print('Use %s' % req)
+    print(f'Use {req}')
 else:
     print('No CuPy installation detected')
 

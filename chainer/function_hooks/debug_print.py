@@ -62,7 +62,7 @@ class PrintHook(function_hook.FunctionHook):
         self.file.write(msg + self.end)
 
     def _process(self, function, in_data, out_grad=None):
-        self._print('function\t{}'.format(function.label))
+        self._print(f'function\t{function.label}')
         self._print('input data')
         for d in in_data:
             if d is None:

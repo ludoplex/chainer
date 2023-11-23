@@ -95,8 +95,9 @@ class ResNetLayers(link.Chain):
         elif n_layers == 152:
             block = [3, 8, 36, 3]
         else:
-            raise ValueError('The n_layers argument should be either 50, 101,'
-                             ' or 152, but {} was given.'.format(n_layers))
+            raise ValueError(
+                f'The n_layers argument should be either 50, 101, or 152, but {n_layers} was given.'
+            )
 
         with self.init_scope():
             self.conv1 = Convolution2D(3, 64, 7, 2, 3, **kwargs)
@@ -108,8 +109,7 @@ class ResNetLayers(link.Chain):
             self.fc6 = Linear(2048, 1000)
 
         if pretrained_model and pretrained_model.endswith('.caffemodel'):
-            _retrieve(n_layers, 'ResNet-{}-model.npz'.format(n_layers),
-                      pretrained_model, self)
+            _retrieve(n_layers, f'ResNet-{n_layers}-model.npz', pretrained_model, self)
         elif pretrained_model:
             npz.load_npz(pretrained_model, self)
 
@@ -152,8 +152,9 @@ class ResNetLayers(link.Chain):
         elif n_layers == 152:
             _transfer_resnet152(caffemodel, chainermodel)
         else:
-            raise ValueError('The n_layers argument should be either 50, 101,'
-                             ' or 152, but {} was given.'.format(n_layers))
+            raise ValueError(
+                f'The n_layers argument should be either 50, 101, or 152, but {n_layers} was given.'
+            )
         npz.save_npz(path_npz, chainermodel, compression=False)
 
     def __call__(self, x, layers=None, **kwargs):
@@ -191,7 +192,7 @@ class ResNetLayers(link.Chain):
         activations = {}
         target_layers = set(layers)
         for key, funcs in self.functions.items():
-            if len(target_layers) == 0:
+            if not target_layers:
                 break
             for func in funcs:
                 h = func(h)
@@ -515,7 +516,7 @@ class BuildingBlock(link.Chain):
                 in_channels, mid_channels, out_channels, stride, initialW)
             self._forward = ["a"]
             for i in range(n_layer - 1):
-                name = 'b{}'.format(i + 1)
+                name = f'b{i + 1}'
                 bottleneck = BottleneckB(out_channels, mid_channels, initialW)
                 setattr(self, name, bottleneck)
                 self._forward.append(name)
@@ -615,9 +616,9 @@ def _global_average_pooling_2d(x):
 
 
 def _transfer_components(src, dst_conv, dst_bn, bname, cname):
-    src_conv = getattr(src, 'res{}_branch{}'.format(bname, cname))
-    src_bn = getattr(src, 'bn{}_branch{}'.format(bname, cname))
-    src_scale = getattr(src, 'scale{}_branch{}'.format(bname, cname))
+    src_conv = getattr(src, f'res{bname}_branch{cname}')
+    src_bn = getattr(src, f'bn{bname}_branch{cname}')
+    src_scale = getattr(src, f'scale{bname}_branch{cname}')
     dst_conv.W.data[:] = src_conv.W.data
     dst_bn.avg_mean[:] = src_bn.avg_mean
     dst_bn.avg_var[:] = src_bn.avg_var
@@ -641,7 +642,7 @@ def _transfer_bottleneckB(src, dst, name):
 def _transfer_block(src, dst, names):
     _transfer_bottleneckA(src, dst.a, names[0])
     for i, name in enumerate(names[1:]):
-        dst_bottleneckB = getattr(dst, 'b{}'.format(i + 1))
+        dst_bottleneckB = getattr(dst, f'b{i + 1}')
         _transfer_bottleneckB(src, dst_bottleneckB, name)
 
 
@@ -671,8 +672,7 @@ def _transfer_resnet101(src, dst):
 
     _transfer_block(src, dst.res2, ['2a', '2b', '2c'])
     _transfer_block(src, dst.res3, ['3a', '3b1', '3b2', '3b3'])
-    _transfer_block(src, dst.res4,
-                    ['4a'] + ['4b{}'.format(i) for i in range(1, 23)])
+    _transfer_block(src, dst.res4, ['4a'] + [f'4b{i}' for i in range(1, 23)])
     _transfer_block(src, dst.res5, ['5a', '5b', '5c'])
 
     dst.fc6.W.data[:] = src.fc1000.W.data
@@ -687,10 +687,8 @@ def _transfer_resnet152(src, dst):
     dst.bn1.beta.data[:] = src.scale_conv1.bias.b.data
 
     _transfer_block(src, dst.res2, ['2a', '2b', '2c'])
-    _transfer_block(src, dst.res3,
-                    ['3a'] + ['3b{}'.format(i) for i in range(1, 8)])
-    _transfer_block(src, dst.res4,
-                    ['4a'] + ['4b{}'.format(i) for i in range(1, 36)])
+    _transfer_block(src, dst.res3, ['3a'] + [f'3b{i}' for i in range(1, 8)])
+    _transfer_block(src, dst.res4, ['4a'] + [f'4b{i}' for i in range(1, 36)])
     _transfer_block(src, dst.res5, ['5a', '5b', '5c'])
 
     dst.fc6.W.data[:] = src.fc1000.W.data
@@ -701,9 +699,8 @@ def _make_npz(path_npz, path_caffemodel, model, n_layers):
     print('Now loading caffemodel (usually it may take few minutes)')
     if not os.path.exists(path_caffemodel):
         raise IOError(
-            'The pre-trained caffemodel does not exist. Please download it '
-            'from \'https://github.com/KaimingHe/deep-residual-networks\', '
-            'and place it on {}'.format(path_caffemodel))
+            f"The pre-trained caffemodel does not exist. Please download it from \'https://github.com/KaimingHe/deep-residual-networks\', and place it on {path_caffemodel}"
+        )
 
     ResNetLayers.convert_caffemodel_to_npz(path_caffemodel, path_npz, n_layers)
     npz.load_npz(path_npz, model)

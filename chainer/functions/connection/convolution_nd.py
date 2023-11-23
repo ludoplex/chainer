@@ -20,7 +20,7 @@ class ConvolutionND(function_node.FunctionNode):
 
     def check_type_forward(self, in_types):
         n_in = in_types.size()
-        type_check.expect(2 <= n_in, n_in <= 3)
+        type_check.expect(n_in >= 2, n_in <= 3)
 
         x_type = in_types[0]
         w_type = in_types[1]
@@ -169,9 +169,12 @@ class ConvolutionNDGradW(function_node.FunctionNode):
         # NumPy raises an error when the array is not contiguous.
         # See: https://github.com/chainer/chainer/issues/2744
         # TODO(niboshi): Remove this code when NumPy is fixed.
-        if (xp is numpy and
-                not (gy.flags.c_contiguous or gy.flags.f_contiguous) and
-                1 in gy.shape):
+        if (
+            xp is numpy
+            and not gy.flags.c_contiguous
+            and not gy.flags.f_contiguous
+            and 1 in gy.shape
+        ):
             gy = numpy.ascontiguousarray(gy)
 
         if xp is numpy:

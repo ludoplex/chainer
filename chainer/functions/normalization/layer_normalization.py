@@ -5,14 +5,12 @@ from chainer.utils import type_check
 
 
 def _broadcast_to(xp, x, shape):
-    # xp: numpy, cupy, or chainer.functions
     if hasattr(xp, 'broadcast_to'):
         return xp.broadcast_to(x, shape)
-    else:
-        # numpy 1.9 doesn't support broadcast_to method
-        dummy = xp.empty(shape)
-        bx, _ = xp.broadcast_arrays(x, dummy)
-        return bx
+    # numpy 1.9 doesn't support broadcast_to method
+    dummy = xp.empty(shape)
+    bx, _ = xp.broadcast_arrays(x, dummy)
+    return bx
 
 
 class LayerNormalization(function_node.FunctionNode):

@@ -159,7 +159,6 @@ class LSTMGrad(function.Function):
             gf[:] = gc * c_prev[:batch] * _grad_sigmoid(sig_f)
             go[:] = gh * co * _grad_sigmoid(sig_o)
             gc_prev[:batch] *= sig_f  # multiply f here
-            gc_prev[batch:] = gc_rest
         else:
             gc_prev = xp.empty_like(c_prev)
             cuda.elementwise(
@@ -178,8 +177,7 @@ class LSTMGrad(function.Function):
                 'lstm_bwd', preamble=_preamble)(
                     c_prev[:batch], c_next[:batch], gc_update, gh, a, i, f, o,
                     gc_prev[:batch], ga, gi, gf, go)
-            gc_prev[batch:] = gc_rest
-
+        gc_prev[batch:] = gc_rest
         return gc_prev, gx
 
     def backward(self, inputs, grads):

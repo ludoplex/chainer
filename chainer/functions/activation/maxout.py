@@ -71,8 +71,7 @@ dtype=float32)
     x_shape = x.shape
     if x_shape[axis] % pool_size != 0:
         expect = 'x.shape[axis] % pool_size == 0'
-        actual = 'x.shape[axis]={}, pool_size={}'.format(
-            x_shape[axis], pool_size)
+        actual = f'x.shape[axis]={x_shape[axis]}, pool_size={pool_size}'
         msg = 'axis dimension must be divided by pool_size'
         raise type_check.InvalidType(expect, actual, msg)
 

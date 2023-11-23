@@ -89,9 +89,9 @@ def main():
         ys = numpy.array([pos_vocab[pos] for _, pos in sentence], numpy.int32)
         data.append((xs, ys))
 
-    print('# of sentences: {}'.format(len(data)))
-    print('# of words: {}'.format(len(vocab)))
-    print('# of pos: {}'.format(len(pos_vocab)))
+    print(f'# of sentences: {len(data)}')
+    print(f'# of words: {len(vocab)}')
+    print(f'# of pos: {len(pos_vocab)}')
 
     model = CRF(len(vocab), len(pos_vocab))
     if args.gpu >= 0:

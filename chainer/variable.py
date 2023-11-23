@@ -39,8 +39,7 @@ def _check_grad_type(func, x, gx):
     if func:
         detail = 'Function `{0}` ({1}) has a bug.\n'.format(
             type(func)._impl_name, func.label)
-        stack = func.stack
-        if stack:
+        if stack := func.stack:
             detail += 'Stacktrace of the function is below:\n'
             for line in traceback.format_list(func.stack):
                 detail += line
@@ -61,24 +60,16 @@ def variable_repr(var):
     .. seealso:: numpy.array_repr
     """
     xp = cuda.get_array_module(var)
-    if xp is numpy:
-        arr = var.data
-    else:
-        arr = var.data.get()
-
-    if var.name:
-        prefix = 'variable ' + var.name
-    else:
-        prefix = 'variable'
-
+    arr = var.data if xp is numpy else var.data.get()
+    prefix = f'variable {var.name}' if var.name else 'variable'
     if arr is None:
         lst = 'None'
     elif arr.size > 0 or arr.shape == (0,):
-        lst = numpy.array2string(arr, None, None, None, ', ', prefix + '(')
+        lst = numpy.array2string(arr, None, None, None, ', ', f'{prefix}(')
     else:  # show zero-length shape unless it is (0,)
-        lst = '[], shape=%s' % (repr(arr.shape),)
+        lst = f'[], shape={repr(arr.shape)}'
 
-    return '%s(%s)' % (prefix, lst)
+    return f'{prefix}({lst})'
 
 
 def variable_str(var):
@@ -89,22 +80,14 @@ def variable_str(var):
     .. seealso:: numpy.array_str
     """
     xp = cuda.get_array_module(var)
-    if xp is numpy:
-        arr = var.data
-    else:
-        arr = var.data.get()
-
-    if var.name:
-        prefix = 'variable ' + var.name
-    else:
-        prefix = 'variable'
-
+    arr = var.data if xp is numpy else var.data.get()
+    prefix = f'variable {var.name}' if var.name else 'variable'
     if arr is None:
         lst = 'None'
     else:
-        lst = numpy.array2string(arr, None, None, None, ' ', prefix + '(')
+        lst = numpy.array2string(arr, None, None, None, ' ', f'{prefix}(')
 
-    return '%s(%s)' % (prefix, lst)
+    return f'{prefix}({lst})'
 
 
 class VariableNode(object):
@@ -289,8 +272,7 @@ class VariableNode(object):
         """Short text that represents the variable node."""
         if self.shape == ():
             return str(self.dtype)
-        return '(%s), %s' % (', '.join(map(str, self.shape)),
-                             str(self.dtype))
+        return f"({', '.join(map(str, self.shape))}), {str(self.dtype)}"
 
     @property
     def rank(self):
@@ -400,8 +382,8 @@ class VariableNode(object):
     def _check_old_style_gradient(self):
         if self._old_style_grad_generator is not None:
             raise RuntimeError(
-                'cannot twice-differentiate an old style Function "%s"' %
-                self._old_style_grad_generator)
+                f'cannot twice-differentiate an old style Function "{self._old_style_grad_generator}"'
+            )
 
 
 def _create_variable(data, name, grad, requires_grad):
@@ -526,7 +508,7 @@ Actual: {0}'''.format(type(data))
 
     def summary(self):
         if self.name:
-            return '<variable %s>' % self.name
+            return f'<variable {self.name}>'
         else:
             return '<variable at 0x%x>' % id(self)
 
@@ -1011,9 +993,7 @@ Actual: {0}'''.format(type(data))
         def get_grad(node):
             if node is None:
                 return None
-            if node in grads:
-                return grads[node]
-            return node.grad_var
+            return grads[node] if node in grads else node.grad_var
 
         def set_grad(node, value):
             if node is None:
@@ -1027,14 +1007,14 @@ Actual: {0}'''.format(type(data))
         while cand_funcs:
             _, _, func = heapq.heappop(cand_funcs)
             inputs = func.inputs
-            target_input_indexes = tuple([
+            target_input_indexes = tuple(
                 i for i, x in enumerate(inputs) if x.requires_grad
-            ])
+            )
             if not target_input_indexes:
                 continue
             outputs = [y() for y in func.outputs]  # access via weak ref
 
-            in_data = tuple([x.data for x in inputs])
+            in_data = tuple(x.data for x in inputs)
             # We need calculate the value of for the out_grad which accumulated
             # because now out_grad is used in backward calculation.
             for y in outputs:
@@ -1042,9 +1022,8 @@ Actual: {0}'''.format(type(data))
                 if isinstance(grad, tuple):
                     grad = chainer.functions.add(*grad)
                     set_grad(y, grad)
-            out_grad = tuple([get_grad(y) for y in outputs])
-            out_grad_data = tuple(
-                [None if g is None else g.data for g in out_grad])
+            out_grad = tuple(get_grad(y) for y in outputs)
+            out_grad_data = tuple(None if g is None else g.data for g in out_grad)
             hooks = chainer.get_function_hooks()
             if func._n_local_function_hooks != 0:
                 hooks = collections.OrderedDict(hooks)
@@ -1178,7 +1157,7 @@ Actual: {0}'''.format(type(data))
            :func:`chainer.functions.transpose` for full documentation.
 
         """
-        if len(axes) == 0:
+        if not axes:
             axes = None
         elif len(axes) == 1 and (isinstance(axes[0], (tuple, list)) or
                                  axes[0] is None):
@@ -1439,9 +1418,7 @@ def as_variable(obj):
         ``obj`` as is.
 
     """
-    if isinstance(obj, Variable):
-        return obj
-    return Variable(obj, requires_grad=False)
+    return obj if isinstance(obj, Variable) else Variable(obj, requires_grad=False)
 
 
 def _recover_parameter(data, name, grad, initializer, update_rule):

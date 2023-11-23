@@ -46,10 +46,7 @@ def main():
 
     # load vocabulary
     vocab = chainer.datasets.get_ptb_words_vocabulary()
-    ivocab = {}
-    for c, i in vocab.items():
-        ivocab[i] = c
-
+    ivocab = {i: c for c, i in vocab.items()}
     # should be same as n_units , described in train_ptb.py
     n_units = args.unit
 
@@ -71,13 +68,13 @@ def main():
     if primetext in vocab:
         prev_word = chainer.Variable(xp.array([vocab[primetext]], xp.int32))
     else:
-        print('ERROR: Unfortunately ' + primetext + ' is unknown.')
+        print(f'ERROR: Unfortunately {primetext} is unknown.')
         exit()
 
     prob = F.softmax(model.predictor(prev_word))
-    sys.stdout.write(primetext + ' ')
+    sys.stdout.write(f'{primetext} ')
 
-    for i in six.moves.range(args.length):
+    for _ in six.moves.range(args.length):
         prob = F.softmax(model.predictor(prev_word))
         if args.sample > 0:
             probability = cuda.to_cpu(prob.data)[0].astype(np.float64)
@@ -89,7 +86,7 @@ def main():
         if ivocab[index] == '<eos>':
             sys.stdout.write('.')
         else:
-            sys.stdout.write(ivocab[index] + ' ')
+            sys.stdout.write(f'{ivocab[index]} ')
 
         prev_word = chainer.Variable(xp.array([index], dtype=xp.int32))
 

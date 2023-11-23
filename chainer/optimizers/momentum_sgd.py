@@ -50,11 +50,11 @@ class MomentumSGDRule(optimizer.UpdateRule):
         if isinstance(v, intel64.mdarray):
             v.inplace_axpby(self.hyperparam.momentum, -
                             self.hyperparam.lr, grad)
-            param.data += v
         else:
             v *= self.hyperparam.momentum
             v -= self.hyperparam.lr * grad
-            param.data += v
+
+        param.data += v
 
     def update_core_gpu(self, param):
         grad = param.grad

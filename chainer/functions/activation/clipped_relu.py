@@ -45,14 +45,13 @@ class ClippedReLU(function_node.FunctionNode):
     def forward_gpu(self, inputs):
         self.retain_inputs((0,))
         x, = inputs
-        if chainer.should_use_cudnn('==always') and x.flags.c_contiguous:
-            self._use_cudnn = True
-            y = cudnn.activation_forward(x, _mode, self.cap)
-            self.retain_outputs((0,))
-        else:
+        if not chainer.should_use_cudnn('==always') or not x.flags.c_contiguous:
             return cuda.elementwise(
                 'T x, T cap', 'T y', 'y = min(max(x, (T)0), cap)',
                 'clipped_relu_fwd')(x, self.cap),
+        self._use_cudnn = True
+        y = cudnn.activation_forward(x, _mode, self.cap)
+        self.retain_outputs((0,))
         return y,
 
     def backward(self, indexes, grad_outputs):
@@ -79,8 +78,11 @@ class ClippedReLUGrad2(function_node.FunctionNode):
 
     def forward_cpu(self, inputs):
         gy, = inputs
-        return utils.force_array(
-            gy * (0 < self.x) * (self.x < self.cap), self.x.dtype),
+        return (
+            utils.force_array(
+                gy * (self.x > 0) * (self.x < self.cap), self.x.dtype
+            ),
+        )
 
     def forward_gpu(self, inputs):
         gy, = inputs
@@ -109,8 +111,11 @@ class ClippedReLUGrad3(function_node.FunctionNode):
 
     def forward_cpu(self, inputs):
         gy, = inputs
-        return utils.force_array(
-            gy * (0 < self.x) * (self.x < self.cap), self.x.dtype),
+        return (
+            utils.force_array(
+                gy * (self.x > 0) * (self.x < self.cap), self.x.dtype
+            ),
+        )
 
     def forward_gpu(self, inputs):
         assert chainer.should_use_cudnn('==always')

@@ -14,9 +14,7 @@ def _backward_one(g, shape):
     lead_axis = tuple(six.moves.range(lead))
     axis = [i + lead for i, sx in enumerate(shape) if sx == 1]
     g = chainer.functions.sum(g, lead_axis + tuple(axis), True)
-    if lead > 0:
-        return chainer.functions.squeeze(g, lead_axis)
-    return g
+    return chainer.functions.squeeze(g, lead_axis) if lead > 0 else g
 
 
 class Broadcast(function_node.FunctionNode):
@@ -31,7 +29,7 @@ class Broadcast(function_node.FunctionNode):
         r_filled = six.moves.zip_longest(*r_shapes, fillvalue=1)
         for ss in r_filled:
             d = max(ss)
-            if not all(s == d or s == 1 for s in ss):
+            if any(s not in [d, 1] for s in ss):
                 expect = 'each dimension has the same size or is 1'
                 actual = 'shapes: ' + ', '.join(map(str, shapes))
                 raise type_check.InvalidType(expect, actual)
@@ -43,9 +41,12 @@ class Broadcast(function_node.FunctionNode):
         return tuple(self._xp.broadcast_arrays(*inputs))
 
     def backward(self, indexes, grad_outputs):
-        return tuple([None if grad_outputs[i] is None else
-                      _backward_one(grad_outputs[i], self.inputs[i].shape)
-                      for i in indexes])
+        return tuple(
+            None
+            if grad_outputs[i] is None
+            else _backward_one(grad_outputs[i], self.inputs[i].shape)
+            for i in indexes
+        )
 
 
 def broadcast(*args):
@@ -95,12 +96,12 @@ class BroadcastTo(function_node.FunctionNode):
         shape = type_check.eval(in_types[0].shape)
         # check the shape in inverse order
         for i in six.moves.range(-1, -len(shape) - 1, -1):
-            if shape[i] == self._shape[i] or shape[i] == 1:
+            if shape[i] in [self._shape[i], 1]:
                 continue
             expect = 'in_type[0].shape[%d] == %d' % (i, self._shape[i])
             if self._shape[i] != 1:
                 expect += ' or in_type[0].shape[%d] == 1' % i
-            actual = 'in_type[0].shape: %s' % str(shape)
+            actual = f'in_type[0].shape: {str(shape)}'
             raise type_check.InvalidType(expect, actual)
 
     def forward(self, inputs):
@@ -108,11 +109,10 @@ class BroadcastTo(function_node.FunctionNode):
         xp = cuda.get_array_module(x)
         if hasattr(xp, 'broadcast_to'):
             return xp.broadcast_to(x, self._shape),
-        else:
-            # numpy 1.9 doesn't support broadcast_to method
-            dummy = xp.empty(self._shape)
-            bx, _ = xp.broadcast_arrays(x, dummy)
-            return bx,
+        # numpy 1.9 doesn't support broadcast_to method
+        dummy = xp.empty(self._shape)
+        bx, _ = xp.broadcast_arrays(x, dummy)
+        return bx,
 
     def backward(self, indexes, grad_outputs):
         gx, = grad_outputs

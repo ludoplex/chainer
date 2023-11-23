@@ -56,8 +56,7 @@ class Classifier(link.Chain):
                  accfun=accuracy.accuracy,
                  label_key=-1):
         if not (isinstance(label_key, (int, str))):
-            raise TypeError('label_key must be int or str, but is %s' %
-                            type(label_key))
+            raise TypeError(f'label_key must be int or str, but is {type(label_key)}')
 
         super(Classifier, self).__init__()
         self.lossfun = lossfun
@@ -103,7 +102,7 @@ class Classifier(link.Chain):
                 args = args[:self.label_key] + args[self.label_key + 1:]
         elif isinstance(self.label_key, str):
             if self.label_key not in kwargs:
-                msg = 'Label key "%s" is not found' % self.label_key
+                msg = f'Label key "{self.label_key}" is not found'
                 raise ValueError(msg)
             t = kwargs[self.label_key]
             del kwargs[self.label_key]

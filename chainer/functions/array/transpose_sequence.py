@@ -18,13 +18,13 @@ def _transpose(xs, length):
             continue
         lengths[len_x:end] = i
         end = len_x
-    lengths[0:end] = len(xs)
+    lengths[:end] = len(xs)
 
     if xp is numpy:
         dtype = xs[0].dtype
         unit = xs[0].shape[1:]
 
-        outs = tuple([xp.empty((l,) + unit, dtype=dtype) for l in lengths])
+        outs = tuple(xp.empty((l,) + unit, dtype=dtype) for l in lengths)
         for i, x in enumerate(xs):
             for p, xi in enumerate(x):
                 outs[p][i] = xi
@@ -77,9 +77,7 @@ class TransposeSequence(function_node.FunctionNode):
             )
 
     def forward(self, xs):
-        if len(xs) == 0:
-            return ()
-        return _transpose(xs, self._length)
+        return () if len(xs) == 0 else _transpose(xs, self._length)
 
     def backward(self, indexes, grad_outputs):
         return TransposeSequence(len(self.inputs)).apply(grad_outputs)
@@ -101,6 +99,4 @@ def transpose_sequence(xs):
     Returns:
         tuple or Variable: Transposed list.
     """
-    if len(xs) == 0:
-        return ()
-    return TransposeSequence(len(xs[0])).apply(xs)
+    return () if len(xs) == 0 else TransposeSequence(len(xs[0])).apply(xs)

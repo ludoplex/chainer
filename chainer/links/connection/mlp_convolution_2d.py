@@ -77,10 +77,12 @@ class MLPConvolution2D(link.ChainList):
         convs = [convolution_2d.Convolution2D(
             in_channels, out_channels[0], ksize, stride, pad,
             initialW=conv_init, initial_bias=bias_init)]
-        for n_in, n_out in zip(out_channels, out_channels[1:]):
-            convs.append(convolution_2d.Convolution2D(
-                n_in, n_out, 1, initialW=conv_init,
-                initial_bias=bias_init))
+        convs.extend(
+            convolution_2d.Convolution2D(
+                n_in, n_out, 1, initialW=conv_init, initial_bias=bias_init
+            )
+            for n_in, n_out in zip(out_channels, out_channels[1:])
+        )
         super(MLPConvolution2D, self).__init__(*convs)
         self.activation = activation
 

@@ -62,11 +62,7 @@ class Triplet(function_node.FunctionNode):
         mask = xp.array(tmp > 0, dtype=numpy.float32)
 
         gy, = grad_outputs
-        if self.reduce == 'mean':
-            g = gy / N
-        else:
-            g = gy[:, None]
-
+        g = gy / N if self.reduce == 'mean' else gy[:, None]
         tmp = 2 * chainer.functions.broadcast_to(g, mask.shape) * mask
 
         ret = []

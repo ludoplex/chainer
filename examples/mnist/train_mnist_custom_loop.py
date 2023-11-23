@@ -36,10 +36,10 @@ def main():
                         help='Number of units')
     args = parser.parse_args()
 
-    print('GPU: {}'.format(args.gpu))
-    print('# unit: {}'.format(args.unit))
-    print('# Minibatch-size: {}'.format(args.batchsize))
-    print('# epoch: {}'.format(args.epoch))
+    print(f'GPU: {args.gpu}')
+    print(f'# unit: {args.unit}')
+    print(f'# Minibatch-size: {args.batchsize}')
+    print(f'# epoch: {args.epoch}')
     print('')
 
     # Set up a neural network to train
@@ -55,8 +55,8 @@ def main():
 
     if args.resume:
         # Resume from a snapshot
-        serializers.load_npz('{}/mlp.model'.format(args.resume), model)
-        serializers.load_npz('{}/mlp.state'.format(args.resume), optimizer)
+        serializers.load_npz(f'{args.resume}/mlp.model', model)
+        serializers.load_npz(f'{args.resume}/mlp.state', optimizer)
 
     # Load the MNIST dataset
     train, test = chainer.datasets.get_mnist()
@@ -64,9 +64,8 @@ def main():
     train_count = len(train)
     test_count = len(test)
 
-    with MultiprocessIterator(train, args.batchsize) as train_iter, \
-        MultiprocessIterator(test, args.batchsize,
-                             repeat=False, shuffle=False) as test_iter:
+    with (MultiprocessIterator(train, args.batchsize) as train_iter, MultiprocessIterator(test, args.batchsize,
+                                 repeat=False, shuffle=False) as test_iter):
 
         sum_accuracy = 0
         sum_loss = 0
@@ -81,9 +80,10 @@ def main():
             sum_accuracy += float(model.accuracy.data) * len(t.data)
 
             if train_iter.is_new_epoch:
-                print('epoch: {}'.format(train_iter.epoch))
-                print('train mean loss: {}, accuracy: {}'.format(
-                    sum_loss / train_count, sum_accuracy / train_count))
+                print(f'epoch: {train_iter.epoch}')
+                print(
+                    f'train mean loss: {sum_loss / train_count}, accuracy: {sum_accuracy / train_count}'
+                )
                 # evaluation
                 sum_accuracy = 0
                 sum_loss = 0
@@ -102,16 +102,17 @@ def main():
                                              len(t.data))
 
                 test_iter.reset()
-                print('test mean  loss: {}, accuracy: {}'.format(
-                    sum_loss / test_count, sum_accuracy / test_count))
+                print(
+                    f'test mean  loss: {sum_loss / test_count}, accuracy: {sum_accuracy / test_count}'
+                )
                 sum_accuracy = 0
                 sum_loss = 0
 
         # Save the model and the optimizer
         print('save the model')
-        serializers.save_npz('{}/mlp.model'.format(args.out), model)
+        serializers.save_npz(f'{args.out}/mlp.model', model)
         print('save the optimizer')
-        serializers.save_npz('{}/mlp.state'.format(args.out), optimizer)
+        serializers.save_npz(f'{args.out}/mlp.state', optimizer)
 
 
 if __name__ == '__main__':

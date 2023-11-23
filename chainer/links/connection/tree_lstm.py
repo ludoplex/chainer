@@ -195,7 +195,7 @@ class NaryTreeLSTM(link.Chain):
             for i in range(1, n_ary + 1):
                 l = linear.Linear(
                     out_size, (3 + n_ary) * out_size, nobias=True)
-                setattr(self, 'W_h{}'.format(i), l)
+                setattr(self, f'W_h{i}', l)
         self.in_size = in_size
         self.state_size = out_size
         self.n_ary = n_ary
@@ -237,7 +237,7 @@ class NaryTreeLSTM(link.Chain):
 
         for i, h in enumerate(hs, start=1):
             if h is not None:
-                tree_lstm_in += getattr(self, 'W_h{}'.format(i))(h)
+                tree_lstm_in += getattr(self, f'W_h{i}')(h)
 
         cs = self._pad_zero_nodes(
             cs, (x.shape[0], self.state_size), dtype=x.dtype)

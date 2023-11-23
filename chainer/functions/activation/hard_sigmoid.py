@@ -52,7 +52,7 @@ class HardSigmoidGrad(function_node.FunctionNode):
 
     def forward_cpu(self, inputs):
         gy, = inputs
-        gx = ((-2.5 < self.x) & (self.x < 2.5)) * gy * 0.2
+        gx = ((self.x > -2.5) & (self.x < 2.5)) * gy * 0.2
         return utils.force_array(gx, self.x.dtype),
 
     def forward_gpu(self, inputs):

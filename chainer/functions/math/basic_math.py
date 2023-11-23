@@ -17,16 +17,13 @@ def _convert_value_to_string(value):
         value = value.data
 
     if numpy.isscalar(value):
-        if value < 0:
-            return '({})'.format(value)
-        else:
-            return str(value)
+        return f'({value})' if value < 0 else str(value)
     elif isinstance(value, (numpy.ndarray, cuda.ndarray)):
         return 'constant array'
     else:
         raise ValueError(
-            'Value must be a scalar, `numpy.ndarray`, `cupy.ndarray` '
-            'or a `Variable`.\nActual: {}'.format(type(value)))
+            f'Value must be a scalar, `numpy.ndarray`, `cupy.ndarray` or a `Variable`.\nActual: {type(value)}'
+        )
 
 
 def _check_constant_type(value):
@@ -36,8 +33,8 @@ def _check_constant_type(value):
         return
     else:
         raise ValueError(
-            'Value must be a scalar, `numpy.ndarray`, `cupy.ndarray` '
-            'or a `Variable`.\nActual: {}'.format(type(value)))
+            f'Value must be a scalar, `numpy.ndarray`, `cupy.ndarray` or a `Variable`.\nActual: {type(value)}'
+        )
 
 
 def _preprocess_const(x, value):
@@ -158,7 +155,7 @@ class AddConstant(function_node.FunctionNode):
 
     @property
     def label(self):
-        return '_ + %s' % _convert_value_to_string(self.value)
+        return f'_ + {_convert_value_to_string(self.value)}'
 
     def check_type_forward(self, in_types):
         type_check.expect(in_types.size() == 1)
@@ -197,24 +194,22 @@ class MultiAdd(function_node.FunctionNode):
         return utils.force_array(y),
 
     def backward(self, indexes, gy):
-        gys = (gy[0],) * self.len
-        return gys
+        return (gy[0],) * self.len
 
 
-def add(*xs):  # lhs + rhs or add more than 2 variables
+def add(*xs):    # lhs + rhs or add more than 2 variables
     """Element-wise addition.
 
     Returns:
         ~chainer.Variable: Output variable.
     """
-    if len(xs) == 2:
-        lhs, rhs = xs
-        if isinstance(rhs, variable.Variable):
-            return Add().apply((lhs, rhs))[0]
-        _check_constant_type(rhs)
-        return AddConstant(rhs).apply((lhs,))[0]
-    else:
+    if len(xs) != 2:
         return MultiAdd().apply(xs)[0]
+    lhs, rhs = xs
+    if isinstance(rhs, variable.Variable):
+        return Add().apply((lhs, rhs))[0]
+    _check_constant_type(rhs)
+    return AddConstant(rhs).apply((lhs,))[0]
 
 
 class Sub(function_node.FunctionNode):
@@ -257,7 +252,7 @@ class SubFromConstant(function_node.FunctionNode):
 
     @property
     def label(self):
-        return '%s - _' % _convert_value_to_string(self.value)
+        return f'{_convert_value_to_string(self.value)} - _'
 
     def check_type_forward(self, in_types):
         type_check.expect(in_types.size() == 1)
@@ -313,7 +308,7 @@ class MulConstant(function_node.FunctionNode):
 
     @property
     def label(self):
-        return '_ * %s' % _convert_value_to_string(self.value)
+        return f'_ * {_convert_value_to_string(self.value)}'
 
     def check_type_forward(self, in_types):
         type_check.expect(in_types.size() == 1)
@@ -420,7 +415,7 @@ class DivFromConstant(function_node.FunctionNode):
 
     @property
     def label(self):
-        return '%s / _' % _convert_value_to_string(self.value)
+        return f'{_convert_value_to_string(self.value)} / _'
 
     def check_type_forward(self, in_types):
         type_check.expect(in_types.size() == 1)
@@ -593,7 +588,7 @@ class PowVarConst(function_node.FunctionNode):
 
     @property
     def label(self):
-        return '_ ** %s' % _convert_value_to_string(self.value)
+        return f'_ ** {_convert_value_to_string(self.value)}'
 
     def check_type_forward(self, in_types):
         type_check.expect(in_types.size() == 1)
@@ -680,7 +675,7 @@ class PowConstVar(function_node.FunctionNode):
 
     @property
     def label(self):
-        return '%s ** _' % _convert_value_to_string(self.value)
+        return f'{_convert_value_to_string(self.value)} ** _'
 
     def check_type_forward(self, in_types):
         type_check.expect(in_types.size() == 1)
@@ -771,7 +766,7 @@ class MatMulVarConst(function_node.FunctionNode):
 
     @property
     def label(self):
-        return '_ @ %s' % _convert_value_to_string(self.value)
+        return f'_ @ {_convert_value_to_string(self.value)}'
 
     def check_type_forward(self, in_types):
         type_check.expect(in_types.size() == 1)
@@ -821,7 +816,7 @@ class MatMulConstVar(function_node.FunctionNode):
 
     @property
     def label(self):
-        return '%s @ _' % _convert_value_to_string(self.value)
+        return f'{_convert_value_to_string(self.value)} @ _'
 
     def check_type_forward(self, in_types):
         type_check.expect(in_types.size() == 1)

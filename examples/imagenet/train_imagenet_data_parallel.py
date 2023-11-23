@@ -74,7 +74,7 @@ def main():
     # Initialize the model to train
     model = archs[args.arch]()
     if args.initmodel:
-        print('Load model from {}'.format(args.initmodel))
+        print(f'Load model from {args.initmodel}')
         chainer.serializers.load_npz(args.initmodel, model)
 
     # Load the datasets and mean file

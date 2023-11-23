@@ -11,12 +11,12 @@ class DeCov(function.Function):
     """DeCov loss (https://arxiv.org/abs/1511.06068)"""
 
     def __init__(self, reduce='half_squared_sum'):
-        self.h_centered = None
         self.covariance = None
+        self.h_centered = None
         if reduce not in ('half_squared_sum', 'no'):
             raise ValueError(
-                "only 'half_squared_sum' and 'no' are valid "
-                "for 'reduce', but '%s' is given" % reduce)
+                f"only 'half_squared_sum' and 'no' are valid for 'reduce', but '{reduce}' is given"
+            )
         self.reduce = reduce
 
     def check_type_forward(self, in_types):
@@ -36,12 +36,11 @@ class DeCov(function.Function):
         self.covariance = self.h_centered.T.dot(self.h_centered)
         xp.fill_diagonal(self.covariance, 0.0)
         self.covariance /= len(h)
-        if self.reduce == 'half_squared_sum':
-            cost = xp.vdot(self.covariance, self.covariance)
-            cost *= h.dtype.type(0.5)
-            return utils.force_array(cost),
-        else:
+        if self.reduce != 'half_squared_sum':
             return self.covariance,
+        cost = xp.vdot(self.covariance, self.covariance)
+        cost *= h.dtype.type(0.5)
+        return utils.force_array(cost),
 
     def backward(self, inputs, grad_outputs):
         xp = cuda.get_array_module(*inputs)

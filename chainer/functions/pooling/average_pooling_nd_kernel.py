@@ -18,7 +18,7 @@ class AveragePoolingNDKernelForward(pooling_nd_kernel.PoolingNDKernelForward):
 
     def main(self, offset, xs):
         # 2D: val = val + in[offset_1];
-        return 'val = val + in[{}];'.format(offset)
+        return f'val = val + in[{offset}];'
 
     def after(self, out_xs):
         return 'out = val * coeff;'
@@ -42,7 +42,7 @@ class AveragePoolingNDKernelBackward(
 
     def main(self, offset, xs, out_xs):
         # 2D: val = val + gy[offset_1];
-        return 'val = val + gy[{}];'.format(offset)
+        return f'val = val + gy[{offset}];'
 
     def after(self, xs):
         return 'gx = val * coeff;'

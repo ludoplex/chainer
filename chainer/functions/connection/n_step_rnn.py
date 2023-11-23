@@ -163,18 +163,13 @@ class CudnnRNNWeightConcat(function.Function):
                     b_type = b_types[ind]
                     if self.rnn_direction == 1:
                         # Uni-direction
-                        if layer == 0 and i < (self.n_W // 2):
-                            w_in = in_size
-                        else:
-                            w_in = out_size
+                        w_in = in_size if layer == 0 and i < (self.n_W // 2) else out_size
+                    elif layer == 0 and i < (self.n_W // 2):
+                        w_in = in_size
+                    elif layer > 0 and i < (self.n_W // 2):
+                        w_in = out_size * self.rnn_direction
                     else:
-                        # Bi-direction
-                        if layer == 0 and i < (self.n_W // 2):
-                            w_in = in_size
-                        elif layer > 0 and i < (self.n_W // 2):
-                            w_in = out_size * self.rnn_direction
-                        else:
-                            w_in = out_size
+                        w_in = out_size
 
                     type_check.expect(
                         w_type.dtype == numpy.float32,
@@ -190,7 +185,7 @@ class CudnnRNNWeightConcat(function.Function):
     def forward(self, inputs):
         handle = cudnn.get_handle()
         ws_size = self.n_layers * self.rnn_direction * self.n_W
-        ws = inputs[0:ws_size]
+        ws = inputs[:ws_size]
         bs = inputs[ws_size:]
         out_size = ws[0].shape[0]
         in_size = ws[0].shape[1]
@@ -233,7 +228,7 @@ class CudnnRNNWeightConcat(function.Function):
     def backward(self, inputs, grads):
         handle = cudnn.get_handle()
         ws_size = self.n_layers * self.rnn_direction * self.n_W
-        ws = inputs[0:ws_size]
+        ws = inputs[:ws_size]
         bs = inputs[ws_size:]
 
         rnn_desc = self.rnn_desc
@@ -279,12 +274,14 @@ class BaseNStepRNN(function.Function):
 
         if rnn_dir not in _rnn_dirs:
             candidate_list = ','.join(_rnn_dirs.keys())
-            raise ValueError('Invalid rnn_dir: "%s". Please select from [%s]'
-                             % (rnn_dir, candidate_list))
+            raise ValueError(
+                f'Invalid rnn_dir: "{rnn_dir}". Please select from [{candidate_list}]'
+            )
         if rnn_mode not in _rnn_modes:
             candidate_list = ','.join(_rnn_modes.keys())
-            raise ValueError('Invalid rnn_mode: "%s". Please select from [%s]'
-                             % (rnn_mode, candidate_list))
+            raise ValueError(
+                f'Invalid rnn_mode: "{rnn_mode}". Please select from [{candidate_list}]'
+            )
         self.rnn_dir = _rnn_dirs[rnn_dir]
         self.rnn_mode = _rnn_modes[rnn_mode]
         self.rnn_direction = _rnn_params_direction[self.rnn_dir]
@@ -506,12 +503,7 @@ class BaseNStepRNN(function.Function):
             workspace.data.ptr, work_size, dw_desc.value, dw.data.ptr,
             self.reserve_space.data.ptr, self.reserve_space.size)
 
-        if self.use_cell:
-            # LSTM
-            return dhx, dcx, dw, dxs
-        else:
-            # GRU, RNN
-            return dhx, dw, dxs
+        return (dhx, dcx, dw, dxs) if self.use_cell else (dhx, dw, dxs)
 
 
 class NStepRNNTanh(BaseNStepRNN):
@@ -832,8 +824,9 @@ def n_step_rnn_base(n_layers, dropout_ratio, hx, ws, bs, xs,
     activation_list = ['tanh', 'relu']
     if activation not in activation_list:
         candidate = ','.join(activation_list)
-        raise ValueError('Invalid activation: "%s". Please select from [%s]'
-                         % (activation, candidate))
+        raise ValueError(
+            f'Invalid activation: "{activation}". Please select from [{candidate}]'
+        )
 
     xp = cuda.get_array_module(hx)
 
@@ -842,7 +835,7 @@ def n_step_rnn_base(n_layers, dropout_ratio, hx, ws, bs, xs,
         lengths = [len(x) for x in xs]
         xs = chainer.functions.concat(xs, axis=0)
 
-        rnn_mode = 'rnn_%s' % activation
+        rnn_mode = f'rnn_{activation}'
         w = cudnn_rnn_weight_concat(
             n_layers, states, use_bi_direction, rnn_mode, ws, bs)
 
@@ -885,21 +878,14 @@ def n_step_rnn_impl(
     direction = 2 if use_bi_direction else 1
     hx = chainer.functions.separate(hx)
     use_cell = cx is not None
-    if use_cell:
-        cx = chainer.functions.separate(cx)
-    else:
-        cx = [None] * len(hx)
-
+    cx = chainer.functions.separate(cx) if use_cell else [None] * len(hx)
     xs_next = xs
     hy = []
     cy = []
     for layer in six.moves.range(n_layers):
 
         # Forward RNN
-        if layer == 0:
-            xs = xs_next
-        else:
-            xs = _dropout_sequence(xs_next, dropout_ratio)
+        xs = xs_next if layer == 0 else _dropout_sequence(xs_next, dropout_ratio)
         idx = direction * layer
         h, c, h_forward = _one_directional_loop(
             f, xs, hx[idx], cx[idx], ws[idx], bs[idx])
@@ -909,10 +895,7 @@ def n_step_rnn_impl(
         if use_bi_direction:
             # Backward RNN
             idx = direction * layer + 1
-            if layer == 0:
-                xs = xs_next
-            else:
-                xs = _dropout_sequence(xs_next, dropout_ratio)
+            xs = xs_next if layer == 0 else _dropout_sequence(xs_next, dropout_ratio)
             h, c, h_backward = _one_directional_loop(
                 f, reversed(xs), hx[idx], cx[idx], ws[idx], bs[idx])
             h_backward.reverse()
@@ -927,10 +910,7 @@ def n_step_rnn_impl(
 
     ys = xs_next
     hy = stack.stack(hy)
-    if use_cell:
-        cy = stack.stack(cy)
-    else:
-        cy = None
+    cy = stack.stack(cy) if use_cell else None
     return hy, cy, tuple(ys)
 
 

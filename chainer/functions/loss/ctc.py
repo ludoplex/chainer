@@ -158,7 +158,7 @@ class ConnectionistTemporalClassification(function.Function):
         if xp == numpy:
             for b in six.moves.range(len(path)):
                 target_path = path[b, :path_length[b]]
-                chars = {c for c in target_path}
+                chars = set(target_path)
                 for c in chars:
                     ret[:, b, c] = xp.sum(
                         multiply_seq[:, b, 0:path_length[b]]

@@ -412,7 +412,7 @@ class UnaryOperator(Expr):
     def __str__(self):
         exp = _repr(self.term)
         if isinstance(self.term, Expr) and self.term.priority < self.priority:
-            exp = '(' + exp + ')'
+            exp = f'({exp})'
 
         return self.exp + exp
 
@@ -448,14 +448,14 @@ class BinaryOperator(Expr):
                 self.priority > self.lhs.priority or
                 (self.right_associative and
                  self.priority == self.lhs.priority)):
-            left = '(' + left + ')'
+            left = f'({left})'
 
         right = _repr(self.rhs)
         if isinstance(self.rhs, Expr) and (
                 self.priority > self.rhs.priority or
                 (not self.right_associative and
                  self.priority == self.rhs.priority)):
-            right = '(' + right + ')'
+            right = f'({right})'
 
         return '{0} {2} {1}'.format(left, right, self.exp)
 
@@ -530,24 +530,15 @@ def same_types(*arrays):
             break
     else:
         return True
-    for x in arrays:
-        if not isinstance(x, cuda.ndarray):
-            return False
-    return True
+    return all(isinstance(x, cuda.ndarray) for x in arrays)
 
 
 def eval(exp):
-    if in_light_mode():
-        return exp
-    else:
-        return exp.eval()
+    return exp if in_light_mode() else exp.eval()
 
 
 def make_variable(value, name):
-    if in_light_mode():
-        return value
-    else:
-        return Variable(value, name)
+    return value if in_light_mode() else Variable(value, name)
 
 
 class LightMode(object):
@@ -579,7 +570,4 @@ def in_light_mode():
 
 
 def prod(xs):
-    if in_light_mode():
-        return _prod_impl(xs)
-    else:
-        return _prod(xs)
+    return _prod_impl(xs) if in_light_mode() else _prod(xs)

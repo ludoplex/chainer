@@ -17,9 +17,7 @@ if cuda.cudnn_enabled:
 
 
 def _pair(x):
-    if hasattr(x, '__getitem__'):
-        return x
-    return x, x
+    return x if hasattr(x, '__getitem__') else (x, x)
 
 
 class Deconvolution2DFunction(function_node.FunctionNode):
@@ -49,7 +47,7 @@ class Deconvolution2DFunction(function_node.FunctionNode):
 
     def check_type_forward(self, in_types):
         n_in = in_types.size()
-        type_check.expect(2 <= n_in, n_in <= 3)
+        type_check.expect(n_in >= 2, n_in <= 3)
         x_type, w_type = in_types[:2]
 
         type_check.expect(
@@ -179,17 +177,19 @@ class Deconvolution2DFunction(function_node.FunctionNode):
         self._calc_out_size(x, W)
         self._set_cover_all(x, W)
 
-        use_cudnn = (
+        if use_cudnn := (
             chainer.should_use_cudnn('>=auto')
             and not self.cover_all
             and x.dtype == W.dtype
-            and ((self.dy == 1 and self.dx == 1)
-                 or (_cudnn_version >= 6000
-                     and not configuration.config.cudnn_deterministic))
+            and (
+                (self.dy == 1 and self.dx == 1)
+                or (
+                    _cudnn_version >= 6000
+                    and not configuration.config.cudnn_deterministic
+                )
+            )
             and (self.groups <= 1 or _cudnn_version >= 7000)
-        )
-
-        if use_cudnn:
+        ):
             # cuDNN implementation
             return self._forward_cudnn(x, W, b)
 
@@ -420,9 +420,6 @@ astype(np.float32)
 
     func = Deconvolution2DFunction(stride, pad, outsize, dilate=dilate,
                                    groups=groups)
-    if b is None:
-        args = x, W
-    else:
-        args = x, W, b
+    args = (x, W) if b is None else (x, W, b)
     y, = func.apply(args)
     return y

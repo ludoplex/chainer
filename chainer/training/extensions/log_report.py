@@ -79,10 +79,7 @@ class LogReport(extension.Extension):
         if self._trigger(trainer):
             # output the result
             stats = self._summary.compute_mean()
-            stats_cpu = {}
-            for name, value in six.iteritems(stats):
-                stats_cpu[name] = float(value)  # copy to CPU
-
+            stats_cpu = {name: float(value) for name, value in six.iteritems(stats)}
             updater = trainer.updater
             stats_cpu['epoch'] = updater.epoch
             stats_cpu['iteration'] = updater.iteration

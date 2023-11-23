@@ -11,5 +11,5 @@ request.urlretrieve(
 zf = zipfile.ZipFile('trainDevTestTrees_PTB.zip')
 for name in zf.namelist():
     (dirname, filename) = os.path.split(name)
-    if not filename == '':
+    if filename != '':
         zf.extract(name, '.')

@@ -135,9 +135,10 @@ class FunctionAdapter(function_node.FunctionNode):
         return self._function.forward(inputs)
 
     def backward(self, target_input_indexes, grad_outputs):
-        in_data = tuple([input.data for input in self.inputs])
-        grad_out_data = tuple([None if grad is None else grad.data
-                               for grad in grad_outputs])
+        in_data = tuple(input.data for input in self.inputs)
+        grad_out_data = tuple(
+            None if grad is None else grad.data for grad in grad_outputs
+        )
 
         with cuda.get_device_from_array(*(in_data + grad_out_data)):
             gxs = self._function.backward(in_data, grad_out_data)
@@ -234,10 +235,7 @@ class Function(object):
 
         ret = node.apply(inputs)
 
-        if len(ret) == 1:
-            return ret[0]
-        else:
-            return tuple(ret)
+        return ret[0] if len(ret) == 1 else tuple(ret)
 
     @property
     def inputs(self):

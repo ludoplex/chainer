@@ -57,15 +57,19 @@ def get_fashion_mnist(withlabel=True, ndim=1, scale=1., dtype=numpy.float32,
 
 def _retrieve_fashion_mnist_training():
     base_url = 'http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/'
-    urls = [base_url + 'train-images-idx3-ubyte.gz',
-            base_url + 'train-labels-idx1-ubyte.gz']
+    urls = [
+        f'{base_url}train-images-idx3-ubyte.gz',
+        f'{base_url}train-labels-idx1-ubyte.gz',
+    ]
     return _retrieve_fashion_mnist('train.npz', urls)
 
 
 def _retrieve_fashion_mnist_test():
     base_url = 'http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/'
-    urls = [base_url + 't10k-images-idx3-ubyte.gz',
-            base_url + 't10k-labels-idx1-ubyte.gz']
+    urls = [
+        f'{base_url}t10k-images-idx3-ubyte.gz',
+        f'{base_url}t10k-labels-idx1-ubyte.gz',
+    ]
     return _retrieve_fashion_mnist('test.npz', urls)
 
 

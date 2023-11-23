@@ -51,5 +51,5 @@ def _get_initializer(initializer):
         return Constant(initializer)
 
     if not callable(initializer):
-        raise TypeError('invalid type of initializer: %s' % type(initializer))
+        raise TypeError(f'invalid type of initializer: {type(initializer)}')
     return initializer

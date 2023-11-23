@@ -28,8 +28,7 @@ class SelectItem(function_node.FunctionNode):
         self._in_shape = x.shape
         self._in_dtype = x.dtype
         if chainer.is_debug():
-            if not ((0 <= t).all() and
-                    (t < x.shape[1]).all()):
+            if not (t >= 0).all() or not (t < x.shape[1]).all():
                 msg = 'Each label `t` need to satisfty `0 <= t < x.shape[1]`'
                 raise ValueError(msg)
 
@@ -38,14 +37,13 @@ class SelectItem(function_node.FunctionNode):
             # This code is equivalent to `t.choose(x.T)`, but `numpy.choose`
             # does not work when `x.shape[1] > 32`.
             return x[six.moves.range(t.size), t],
-        else:
-            y = cuda.elementwise(
-                'S t, raw T x',
-                'T y',
-                'int ind[] = {i, t}; y = x[ind];',
-                'getitem_fwd'
-            )(t, x)
-            return y,
+        y = cuda.elementwise(
+            'S t, raw T x',
+            'T y',
+            'int ind[] = {i, t}; y = x[ind];',
+            'getitem_fwd'
+        )(t, x)
+        return y,
 
     def backward(self, indexes, gy):
         t = self.get_retained_inputs()[0]

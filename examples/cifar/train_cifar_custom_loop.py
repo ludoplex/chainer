@@ -40,9 +40,9 @@ def main():
                         help='Resume the training from snapshot')
     args = parser.parse_args()
 
-    print('GPU: {}'.format(args.gpu))
-    print('# Minibatch-size: {}'.format(args.batchsize))
-    print('# epoch: {}'.format(args.epoch))
+    print(f'GPU: {args.gpu}')
+    print(f'# Minibatch-size: {args.batchsize}')
+    print(f'# epoch: {args.epoch}')
     print('')
 
     # Set up a neural network to train.
@@ -88,7 +88,7 @@ def main():
         # Reduce learning rate by 0.5 every 25 epochs.
         if train_iter.epoch % 25 == 0 and train_iter.is_new_epoch:
             optimizer.lr *= 0.5
-            print('Reducing learning rate to: {}'.format(optimizer.lr))
+            print(f'Reducing learning rate to: {optimizer.lr}')
 
         x_array, t_array = convert.concat_examples(batch, args.gpu)
         x = chainer.Variable(x_array)
@@ -98,9 +98,10 @@ def main():
         sum_acc += float(model.accuracy.data) * len(t.data)
 
         if train_iter.is_new_epoch:
-            print('epoch: {}'.format(train_iter.epoch))
-            print('train mean loss: {}, accuracy: {}'.format(
-                sum_loss / train_count, sum_acc / train_count))
+            print(f'epoch: {train_iter.epoch}')
+            print(
+                f'train mean loss: {sum_loss / train_count}, accuracy: {sum_acc / train_count}'
+            )
             sum_acc = 0
             sum_loss = 0
             # Enable evaluation mode.
@@ -116,8 +117,9 @@ def main():
                         sum_acc += float(model.accuracy.data) * len(t.data)
 
             test_iter.reset()
-            print('test mean  loss: {}, accuracy: {}'.format(
-                sum_loss / test_count, sum_acc / test_count))
+            print(
+                f'test mean  loss: {sum_loss / test_count}, accuracy: {sum_acc / test_count}'
+            )
             sum_acc = 0
             sum_loss = 0
 
